@@ -1,0 +1,43 @@
+imports:
+    - { resource: tables.yml }
+
+services:
+    FH3095.WoWGuildMemberCheck.service:
+        class: FH3095\WoWGuildMemberCheck\service
+        arguments:
+            - '@user'
+            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
+
+    FH3095.WoWGuildMemberCheck.controller:
+        class: FH3095\WoWGuildMemberCheck\controller\main
+        arguments:
+            - '@config'
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '@request'
+            - '@FH3095.WoWGuildMemberCheck.service'
+            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
+
+    FH3095.WoWGuildMemberCheck.listener:
+        class: FH3095\WoWGuildMemberCheck\event\main_listener
+        arguments:
+            - '@controller.helper'
+            - '@template'
+            - '@user'
+            - '%core.php_ext%'
+            - '@FH3095.WoWGuildMemberCheck.service'
+            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
+        tags:
+            - { name: event.listener }
+
+    FH3095.WoWGuildMemberCheck.cron.task.demo:
+        class: FH3095\WoWGuildMemberCheck\cron\task\demo
+        arguments:
+            - '@config'
+            - '@FH3095.WoWGuildMemberCheck.service'
+            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
+        calls:
+            - [set_name, [cron.task.demo]]
+        tags:
+            - { name: cron.task }

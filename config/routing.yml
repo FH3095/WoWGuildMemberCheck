@@ -1,0 +1,3 @@
+FH3095_WoWGuildMemberCheck_OAuthTarget:
+    path: /wowguildmembercheck/oauthtarget
+    defaults: { _controller: FH3095.WoWGuildMemberCheck.controller:handleOAuthTarget }

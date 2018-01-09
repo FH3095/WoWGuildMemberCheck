@@ -1,0 +1,2 @@
+parameters:
+    FH3095.WoWGuildMemberCheck.tables.WowCharToUser: %core.table_prefix%wowguildmembercheck_wowchartouser
