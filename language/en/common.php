@@ -1,12 +1,4 @@
 <?php
-/**
- *
- * WoW Guild Member Check. An extension for the phpBB Forum Software package.
- *
- * @copyright (c) 2018, FH3095
- * @license GNU General Public License, version 2 (GPL-2.0)
- *
- */
 
 if (!defined('IN_PHPBB'))
 {
@@ -19,15 +11,8 @@ if (empty($lang) || !is_array($lang))
 }
 
 $lang = array_merge($lang, array(
-	'DEMO_PAGE'			=> 'Demo',
-	'DEMO_HELLO'		=> 'Hello %s!',
-	'DEMO_GOODBYE'		=> 'Goodbye %s!',
-
-	'ACP_DEMO'					=> 'Settings',
-	'ACP_DEMO_GOODBYE'			=> 'Should say goodbye?',
-	'ACP_DEMO_SETTING_SAVED'	=> 'Settings have been saved successfully!',
-
-	'ACME_DEMO_NOTIFICATION'	=> 'Acme demo notification',
-
-	'VIEWING_ACME_DEMO'			=> 'Viewing Acme Demo',
+	'ACP_WOW_GUILD_MEMBER_CHECK'			=> 'WoW Guild Member Check',
+	'ACP_WOW_GUILD_MEMBER_CHECK_EXPLAIN'	=> 'TODO_SETTINGS',
+	'ACP_WOW_GUILD_MEMBER_CHECK_SETTINGS'	=> 'Settings',
+	'WOW_GUILD_MEMBER_CHECK_LOG_CONFIG_SETTINGS'	=> 'Wow Guild Member Check Settings updated',
 ));

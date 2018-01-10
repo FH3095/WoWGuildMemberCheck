@@ -1,29 +1,16 @@
 <?php
-/**
- *
- * WoW Guild Member Check. An extension for the phpBB Forum Software package.
- *
- * @copyright (c) 2018, FH3095
- * @license GNU General Public License, version 2 (GPL-2.0)
- *
- */
 
 namespace FH3095\WoWGuildMemberCheck\event;
 
-/**
- * @ignore
- */
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-/**
- * WoW Guild Member Check Event listener.
- */
+
 class main_listener implements EventSubscriberInterface
 {
 	static public function getSubscribedEvents()
 	{
 		return array(
-			'core.display_forums_modify_template_vars'	=> 'display_forums_modify_template_vars',
+			//'core.display_forums_modify_template_vars'	=> 'display_forums_modify_template_vars',
 			'core.user_setup'				=> 'load_language_on_setup',
 			'core.page_header'				=> 'add_page_header_link',
 			'core.viewonline_overwrite_location'	=> 'viewonline_page',
@@ -79,7 +66,9 @@ class main_listener implements EventSubscriberInterface
 	public function add_page_header_link()
 	{
 		$this->template->assign_vars(array(
-			'U_DEMO_PAGE'	=> $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '1')),
+			'U_DEMO_PAGE0'	=> $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '0')),
+			'U_DEMO_PAGE1'	=> $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '1')),
+			'U_DEMO_PAGE2'	=> $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '2')),
 		));
 	}
 

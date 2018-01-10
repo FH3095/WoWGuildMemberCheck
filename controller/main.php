@@ -13,10 +13,6 @@ namespace FH3095\WoWGuildMemberCheck\controller;
 
 
 use Symfony\Component\HttpFoundation\JsonResponse;
-use OAuth\OAuth2\Service\BattleNet;
-use OAuth\Common\Storage\SymfonySession;
-use OAuth\Common\Consumer\Credentials;
-use OAuth\Common\Http\Uri\Uri;
 
 /**
  * WoW Guild Member Check main controller.
@@ -34,9 +30,9 @@ class main
 
 	/* @var \phpbb\user */
 	protected $user;
-	
+
 	protected $request;
-	
+
 	protected $service;
 
 	/**
@@ -67,52 +63,40 @@ class main
 	 */
 	public function handleOAuthTarget()
 	{
-		$this->request->enable_super_globals();
 		$session = $this->service->start_session();
-		$this->request->disable_super_globals();
-
-		echo $session->getId() . '<br>';
-		foreach($_SESSION AS $key => $value) {
-			echo $key . '=>';
-			var_dump($value);
-			echo '<br><br><br>';
-		}
-		$serviceFactory = new \OAuth\ServiceFactory();
-		$serviceFactory->setHttpClient(new \OAuth\Common\Http\Client\CurlClient());
-		$credentials = new Credentials(
-			'rqdbvuhx6stz4egtf6vwe4jph8dv28rx',
-			'xB9UtmNAqWjyCAxBsGAjtRuuBftVYdb9',
-			'https://www.risen-insanity.eu/forum/app.php/wowguildmembercheck/oauthtarget'
-		);
-
-		$storage = new SymfonySession($session);
-		$battlenetService = $serviceFactory->createService('battlenet', $credentials, $storage, array(BattleNet::SCOPE_WOW_PROFILE), new Uri(BattleNet::API_URI_EU));
+		$battlenetService = $this->service->get_battle_net_service();
 		// https://eu.battle.net/oauth/check_token?token=32t7w37zu9wa4j7c8yvyf9bv
+		/*define('USER_NORMAL', 0);
+		define('USER_INACTIVE', 1);
+		define('USER_IGNORE', 2);
+		define('USER_FOUNDER', 3);*/
+
 		if($this->request->is_set('go')) {
-			$session->invalidate();
-			$url = $battlenetService->getAuthorizationUri();
-			header( "Location: $url" );
-		} elseif($session->has('wowMsg')) {
-			$l_message = !$this->config['acme_demo_goodbye'] ? 'DEMO_HELLO' : 'DEMO_GOODBYE';
-			$this->template->assign_var('DEMO_MESSAGE', $this->user->lang($l_message, $session->get('wowMsg')));
-		} elseif($this->request->is_set('code')) {
-			// This was a callback request from Battle.net, get the token
-			$token = $battlenetService->requestAccessToken($this->request->variable('code', ''));
-			// See https://dev.battle.net/io-docs for OAuth request types.
-			//
-			// Without any scopes specified, we can get their BattleTag.
-			$result = json_decode($battlenetService->request('/account/user'));
-			$msg = $result->battletag . ': ';
-			$result = json_decode($battlenetService->request('/wow/user/characters'));
-			foreach($result->characters as $character) {
-				if(0==strcasecmp($character->guildRealm,'Rexxar') && 0==strcasecmp($character->guild,'Risen Insanity')) {
-					$msg .= $character->name . '-' . $character->realm . ', ';
-				}
+			if($this->request->variable('go', 0) == 1) {
+				$session->invalidate();
+				$url = $battlenetService->getAuthorizationUri();
+				header( 'Location: ' . $url );
+				exit;
+			} elseif($this->request->variable('go', 0) == 2) {
+				$session->remove('wowmembercheck_characters');
+				header('Location: ' . $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '0')));
+				exit;
 			}
-			$session->set('wowMsg', $msg);
-			$l_message = !$this->config['acme_demo_goodbye'] ? 'DEMO_HELLO' : 'DEMO_GOODBYE';
-			$this->template->assign_var('DEMO_MESSAGE', $this->user->lang($l_message, $msg));
 		}
-		return $this->helper->render('demo_body.html');
+		if($session->has('wowmembercheck_characters')) {
+			$this->template->assign_var('DEMO_TITLE', 'Title');
+			$this->template->assign_var('DEMO_MESSAGE', 'Hello '. print_r($this->service->get_user_characters_from_session(), true));
+		} else {
+			$totalNew = false;
+			if(!$battlenetService->getStorage()->hasAccessToken($battlenetService->service())) {
+				$battlenetService->requestAccessToken($this->request->variable('code', ''));
+				$totalNew = true;
+			}
+			$characters = $this->service->get_wow_characters($battlenetService, $this->request->variable('code', ''));
+			$this->service->save_user_characters_to_session($characters);
+			$this->template->assign_var('DEMO_TITLE', 'Title');
+			$this->template->assign_var('DEMO_MESSAGE', 'Hello ' . ($totalNew ? 'total ' : '') . 'new '. print_r($this->service->get_user_characters_from_session(), true));
+		}
+		return $this->helper->render('oauth_result_body.html');
 	}
 }

@@ -5,7 +5,10 @@ services:
     FH3095.WoWGuildMemberCheck.service:
         class: FH3095\WoWGuildMemberCheck\service
         arguments:
+            - '@config'
+            - '@controller.helper'
             - '@user'
+            - '@request'
             - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
 
     FH3095.WoWGuildMemberCheck.controller:
