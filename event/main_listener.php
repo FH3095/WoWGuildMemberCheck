@@ -30,7 +30,7 @@ class main_listener implements EventSubscriberInterface
 
 	/** @var string phpEx */
 	protected $php_ext;
-	
+
 	protected $service;
 
 	/**
@@ -103,7 +103,7 @@ class main_listener implements EventSubscriberInterface
 		$forum_row['FORUM_NAME'] .= ' :: Acme Event ::';
 		$event['forum_row'] = $forum_row;
 	}
-	
+
 	public function register_page($event) {
 		$vars = $event['template_vars'];
 		$vars['S_WOWMEMBERCHECK_BNET_AUTH_PATH'] = (String)($this->service->get_battle_net_service()->getAuthorizationUri());

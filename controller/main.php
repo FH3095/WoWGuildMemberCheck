@@ -80,7 +80,7 @@ class main
 				}
 				$charactersStr .= $character['name']  . '-' . $character['server'];
 			}
-			
+
 			$resultMsg = $this->user->lang['WOW_GUILD_MEMBER_CHECK_BATTLENET_SUCCESS'] . $charactersStr . '.';
 			$this->template->assign_var('WOWMEMBERCHECK_OAUTH_RESULT', $resultMsg);
 		} else {
