@@ -1,8 +1,17 @@
+<script type="text/javascript">
+// <![CDATA[
+	function wowmembercheck_open_battlenet_auth_page() {
+		window.open("{S_WOWMEMBERCHECK_BNET_AUTH_PATH}","_blank","menubar=0,status=0,height=700,width=500");
+	}
+// ]]>
+</script>
 <dl>
 	<dt>
 		<label for="wowmembercheck_characters_in_guild">{L_WOW_GUILD_MEMBER_CHECK_CHARACTERS_IN_GUILD}{L_COLON}</label>
 	</dt>
 	<dd>
 		<span>{S_WOWMEMBERCHECK_CHARACTERS_IN_GUILD}</span>
+		<input type="button" name="wowmembercheck_battlenet_button" id="wowmembercheck_battlenet_button" value="{L_WOW_GUILD_MEMBER_CHECK_BATTLENET_BUTTON}"
+			onclick="wowmembercheck_open_battlenet_auth_page(); return false;"/>
 	</dd>
 </dl>

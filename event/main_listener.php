@@ -109,19 +109,19 @@ class main_listener implements EventSubscriberInterface
 		$vars['S_WOWMEMBERCHECK_BNET_AUTH_PATH'] = (String)($this->service->get_battle_net_service()->getAuthorizationUri());
 		$event['template_vars'] = $vars;
 	}
-	
+
 	public function profile_page($event) {
 		$chars = $this->service->get_wow_characters_from_db();
-		if ($chars == null) {
-			return;
-		}
 		$charsTxt = "";
-		foreach($chars AS $char) {
-			if(!empty($charsTxt)) {
-				$charsTxt .= ', ';
+		if ($chars !== null) {
+			foreach($chars AS $char) {
+				if(!empty($charsTxt)) {
+					$charsTxt .= ', ';
+				}
+				$charsTxt .= $char['name'] . '-' . $char['server'];
 			}
-			$charsTxt .= $char['name'] . '-' . $char['server'];
 		}
 		$this->template->assign_var('S_WOWMEMBERCHECK_CHARACTERS_IN_GUILD', $charsTxt);
+		$this->template->assign_var('S_WOWMEMBERCHECK_BNET_AUTH_PATH', (String)($this->service->get_battle_net_service()->getAuthorizationUri()));
 	}
 }
