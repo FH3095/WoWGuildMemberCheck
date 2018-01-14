@@ -9,7 +9,9 @@ services:
             - '@controller.helper'
             - '@user'
             - '@request'
+            - '@dbal.conn'
             - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
+
 
     FH3095.WoWGuildMemberCheck.controller:
         class: FH3095\WoWGuildMemberCheck\controller\main

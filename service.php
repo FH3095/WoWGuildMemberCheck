@@ -33,14 +33,17 @@ class service
 
 	protected $helper;
 
+	protected $db;
 
-	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\user $user, \phpbb\request\request $request, $table_name)
+
+	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\user $user, \phpbb\request\request $request, \phpbb\db\driver\driver_interface $db, $table_name)
 	{
 		$this->config = $config;
 		$this->helper = $helper;
 		$this->user = $user;
 		$this->table_name = $table_name;
 		$this->request = $request;
+		$this->db = $db;
 		$this->session = null;
 	}
 
@@ -61,6 +64,27 @@ class service
 		if($this->user == null || $this->user->data['user_id'] == ANONYMOUS || !($this->user->data['user_type'] == USER_NORMAL || $this->user->data['user_type'] == USER_FOUNDER)) {
 			return false;
 		}
+		$sql = $this->db->sql_build_query('SELECT', array(
+			'SELECT'	=> 'char_id,server,name',
+			'FROM'		=> array($this->table_name => 'c2u'),
+			'WHERE'		=> 'user_id = ' . ((int)$this->user->data['user_id']),
+		));
+		$result = $this->db->sql_query($sql);
+		$rowset = $this->db->sql_fetchrowset($result);
+		$this->db->sql_freeresult($result);
+
+		$compareFunc = function($c1, $c2) {
+			$ret = strcasecmp($c1['server'], $c2['server']);
+			if($ret != 0) {
+				return $ret;
+			}
+			$ret = strcasecmp($c1['name'], $c2['name']);
+			return $ret;
+		};
+
+		$toDelete = array_udiff($rowset, $characters, $compareFunc);
+		$toAdd = array_udiff($characters, $rowset, $compareFunc);
+
 		return true;
 	}
 
