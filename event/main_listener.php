@@ -14,7 +14,8 @@ class main_listener implements EventSubscriberInterface
 			'core.user_setup'				=> 'load_language_on_setup',
 			'core.page_header'				=> 'add_page_header_link',
 			'core.viewonline_overwrite_location'	=> 'viewonline_page',
-			'core.ucp_register_modify_template_data' => 'register_page',
+			'core.ucp_register_modify_template_data'	=> 'register_page',
+			'core.ucp_profile_modify_profile_info'		=> 'profile_page',
 		);
 	}
 
@@ -107,5 +108,20 @@ class main_listener implements EventSubscriberInterface
 		$vars = $event['template_vars'];
 		$vars['S_WOWMEMBERCHECK_BNET_AUTH_PATH'] = (String)($this->service->get_battle_net_service()->getAuthorizationUri());
 		$event['template_vars'] = $vars;
+	}
+	
+	public function profile_page($event) {
+		$chars = $this->service->get_wow_characters_from_db();
+		if ($chars == null) {
+			return;
+		}
+		$charsTxt = "";
+		foreach($chars AS $char) {
+			if(!empty($charsTxt)) {
+				$charsTxt .= ', ';
+			}
+			$charsTxt .= $char['name'] . '-' . $char['server'];
+		}
+		$this->template->assign_var('S_WOWMEMBERCHECK_CHARACTERS_IN_GUILD', $charsTxt);
 	}
 }

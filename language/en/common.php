@@ -21,4 +21,5 @@ $lang = array_merge($lang, array(
 	'WOWMEMBERCHECK_OAUTH_CLOSE_NOW'			=> 'You can close this window now.',
 	'WOW_GUILD_MEMBER_CHECK_BATTLENET_ACCESS_DENIED'	=> 'Battle.Net access denied.',
 	'WOW_GUILD_MEMBER_CHECK_BATTLENET_SUCCESS'			=> 'Battle.Net characters fetched successfully. Characters in guild: ',
+	'WOW_GUILD_MEMBER_CHECK_CHARACTERS_IN_GUILD'		=> 'Characters in guild',
 ));
