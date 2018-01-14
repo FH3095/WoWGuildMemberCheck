@@ -14,6 +14,7 @@ class main_listener implements EventSubscriberInterface
 			'core.user_setup'				=> 'load_language_on_setup',
 			'core.page_header'				=> 'add_page_header_link',
 			'core.viewonline_overwrite_location'	=> 'viewonline_page',
+			'core.ucp_register_modify_template_data' => 'register_page',
 		);
 	}
 
@@ -28,6 +29,8 @@ class main_listener implements EventSubscriberInterface
 
 	/** @var string phpEx */
 	protected $php_ext;
+	
+	protected $service;
 
 	/**
 	 * Constructor
@@ -39,6 +42,7 @@ class main_listener implements EventSubscriberInterface
 	 */
 	public function __construct(\phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\user $user, $php_ext, \FH3095\WoWGuildMemberCheck\service $service, $charTable)
 	{
+		$this->service = $service;
 		$this->helper   = $helper;
 		$this->template = $template;
 		$this->user     = $user;
@@ -97,5 +101,11 @@ class main_listener implements EventSubscriberInterface
 		$forum_row = $event['forum_row'];
 		$forum_row['FORUM_NAME'] .= ' :: Acme Event ::';
 		$event['forum_row'] = $forum_row;
+	}
+	
+	public function register_page($event) {
+		$vars = $event['template_vars'];
+		$vars['S_WOWMEMBERCHECK_BNET_AUTH_PATH'] = (String)($this->service->get_battle_net_service()->getAuthorizationUri());
+		$event['template_vars'] = $vars;
 	}
 }

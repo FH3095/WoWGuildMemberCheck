@@ -58,15 +58,18 @@ class service
 	}
 
 	public function update_user_characters($characters) {
-
+		if($this->user == null || $this->user->data['user_id'] == ANONYMOUS || !($this->user->data['user_type'] == USER_NORMAL || $this->user->data['user_type'] == USER_FOUNDER)) {
+			return false;
+		}
+		return true;
 	}
 
 	public function save_user_characters_to_session($characters) {
-		$this->start_session()->set('wowmembercheck_characters', $characters);
+		$this->start_session()->set(self::get_character_session_key(), $characters);
 	}
 
 	public function get_user_characters_from_session() {
-		return $this->start_session()->get('wowmembercheck_characters');
+		return $this->start_session()->get(self::get_character_session_key());
 	}
 
 	public function get_wow_characters($bnetService, $code) {
@@ -80,6 +83,9 @@ class service
 				0==strcasecmp($character->guild, $this->config['wowmembercheck_guild_name'])) {
 				$characters[] = array('server'=>$character->realm, 'name'=>$character->name);
 			}
+		}
+		if(empty($characters)) {
+			return null;
 		}
 		return $characters;
 	}
@@ -95,5 +101,9 @@ class service
 		$this->request->disable_super_globals();
 
 		return $this->session;
+	}
+
+	protected static function get_character_session_key() {
+		return "wowmembercheck_characters";
 	}
 }

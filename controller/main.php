@@ -83,19 +83,27 @@ class main
 				exit;
 			}
 		}
-		if($session->has('wowmembercheck_characters')) {
-			$this->template->assign_var('DEMO_TITLE', 'Title');
-			$this->template->assign_var('DEMO_MESSAGE', 'Hello '. print_r($this->service->get_user_characters_from_session(), true));
-		} else {
-			$totalNew = false;
-			if(!$battlenetService->getStorage()->hasAccessToken($battlenetService->service())) {
-				$battlenetService->requestAccessToken($this->request->variable('code', ''));
-				$totalNew = true;
+
+		if($this->service->get_user_characters_from_session() == null) {
+			if($battlenetService->getStorage()->hasAccessToken($battlenetService->service()) || $this->request->is_set('code')) {
+				$characters = $this->service->get_wow_characters($battlenetService, $this->request->variable('code', ''));
+				$this->service->save_user_characters_to_session($characters);
 			}
-			$characters = $this->service->get_wow_characters($battlenetService, $this->request->variable('code', ''));
-			$this->service->save_user_characters_to_session($characters);
-			$this->template->assign_var('DEMO_TITLE', 'Title');
-			$this->template->assign_var('DEMO_MESSAGE', 'Hello ' . ($totalNew ? 'total ' : '') . 'new '. print_r($this->service->get_user_characters_from_session(), true));
+		}
+		if($this->service->get_user_characters_from_session()) {
+			$this->service->update_user_characters($this->service->get_user_characters_from_session());
+			$charactersStr = "";
+			foreach($this->service->get_user_characters_from_session() AS $character) {
+				if(!empty($charactersStr)) {
+					$charactersStr  .= ', ';
+				}
+				$charactersStr .= $character['name']  . '-' . $character['server'];
+			}
+			
+			$resultMsg = $this->user->lang['WOW_GUILD_MEMBER_CHECK_BATTLENET_SUCCESS'] . $charactersStr . '.';
+			$this->template->assign_var('WOWMEMBERCHECK_OAUTH_RESULT', $resultMsg);
+		} else {
+			$this->template->assign_var('WOWMEMBERCHECK_OAUTH_RESULT', '<span class="error">' . $this->user->lang['WOW_GUILD_MEMBER_CHECK_BATTLENET_ACCESS_DENIED'] . '</span>');
 		}
 		return $this->helper->render('oauth_result_body.html');
 	}
