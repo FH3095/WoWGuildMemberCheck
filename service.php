@@ -61,17 +61,10 @@ class service
 	}
 
 	public function update_user_characters($characters) {
-		if($this->user == null || $this->user->data['user_id'] == ANONYMOUS || !($this->user->data['user_type'] == USER_NORMAL || $this->user->data['user_type'] == USER_FOUNDER)) {
+		$rowset = $this->get_wow_characters_from_db();
+		if(null === $rowset) {
 			return false;
 		}
-		$sql = $this->db->sql_build_query('SELECT', array(
-			'SELECT'	=> 'char_id,server,name',
-			'FROM'		=> array($this->table_name => 'c2u'),
-			'WHERE'		=> 'user_id = ' . ((int)$this->user->data['user_id']),
-		));
-		$result = $this->db->sql_query($sql);
-		$rowset = $this->db->sql_fetchrowset($result);
-		$this->db->sql_freeresult($result);
 
 		$compareFunc = function($c1, $c2) {
 			$ret = strcasecmp($c1['server'], $c2['server']);
@@ -85,6 +78,18 @@ class service
 		$toDelete = array_udiff($rowset, $characters, $compareFunc);
 		$toAdd = array_udiff($characters, $rowset, $compareFunc);
 
+		$this->db->sql_transaction('begin');
+		foreach($toDelete AS $char) {
+			$sql = 'DELETE FROM ' . $this->table_name . ' WHERE ' . $this->db->sql_build_array('DELETE',
+				array('user_id' => $this->user->data['user_id'], 'server' => $char['server'], 'name' => $char['name']));
+			$this->db->sql_query($sql);
+		}
+		foreach($toAdd AS $char) {
+			$sql = 'INSERT INTO ' . $this->table_name . ' ' . $this->db->sql_build_array('INSERT',
+				array('user_id' => $this->user->data['user_id'], 'server' => $char['server'], 'name' => $char['name']));
+			$this->db->sql_query($sql);
+		}
+		$this->db->sql_transaction('commit');
 		return true;
 	}
 
@@ -112,6 +117,23 @@ class service
 			return null;
 		}
 		return $characters;
+	}
+
+	public function get_wow_characters_from_db() {
+		if($this->user == null || $this->user->data['user_id'] == ANONYMOUS || !($this->user->data['user_type'] == USER_NORMAL || $this->user->data['user_type'] == USER_FOUNDER)) {
+			return null;
+		}
+
+		$sql = $this->db->sql_build_query('SELECT', array(
+			'SELECT'	=> 'char_id,server,name',
+			'FROM'		=> array($this->table_name => 'c2u'),
+			'WHERE'		=> 'user_id = ' . ((int)$this->user->data['user_id']),
+		));
+		$result = $this->db->sql_query($sql);
+		$rowset = $this->db->sql_fetchrowset($result);
+		$this->db->sql_freeresult($result);
+
+		return $rowset;
 	}
 
 	public function start_session() {
