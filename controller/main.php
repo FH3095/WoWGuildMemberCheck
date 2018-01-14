@@ -35,14 +35,6 @@ class main
 
 	protected $service;
 
-	/**
-	 * Constructor
-	 *
-	 * @param \phpbb\config\config		$config
-	 * @param \phpbb\controller\helper	$helper
-	 * @param \phpbb\template\template	$template
-	 * @param \phpbb\user				$user
-	 */
 	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\user $user, \phpbb\request\request $request,
 			\FH3095\WoWGuildMemberCheck\service $service, $charTable)
 	{
@@ -54,22 +46,11 @@ class main
 		$this->service = $service;
 	}
 
-	/**
-	 * Demo controller for route /demo/{name}
-	 *
-	 * @param string $name
-	 *
-	 * @return \Symfony\Component\HttpFoundation\Response A Symfony Response object
-	 */
 	public function handleOAuthTarget()
 	{
 		$session = $this->service->start_session();
 		$battlenetService = $this->service->get_battle_net_service();
-		// https://eu.battle.net/oauth/check_token?token=32t7w37zu9wa4j7c8yvyf9bv
-		/*define('USER_NORMAL', 0);
-		define('USER_INACTIVE', 1);
-		define('USER_IGNORE', 2);
-		define('USER_FOUNDER', 3);*/
+
 
 		if($this->request->is_set('go')) {
 			if($this->request->variable('go', 0) == 1) {
