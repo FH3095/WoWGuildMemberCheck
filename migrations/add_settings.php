@@ -14,6 +14,10 @@ class add_settings extends migration
 			array('config.add', array('wowmembercheck_guild_name', '')),
 			array('config.add', array('wowmembercheck_guild_server', '')),
 			array('config.add', array('wowmembercheck_guild_region', '')),
+			array('config.add', array('wowmembercheck_group_add_inguild', '')),
+			array('config.add', array('wowmembercheck_group_remove_inguild', '')),
+			array('config.add', array('wowmembercheck_group_add_outofguild', '')),
+			array('config.add', array('wowmembercheck_group_remove_outofguild', '')),
 		);
 	}
 }

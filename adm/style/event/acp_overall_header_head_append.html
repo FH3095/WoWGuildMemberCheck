@@ -1,0 +1,21 @@
+<script type="text/javascript">
+// <![CDATA[
+
+function wowmembercheck_mutiple_changed(selectId) {
+	var optsStr = "";
+	var selectElement = document.getElementById(selectId);
+
+	for (var i = 0; i < selectElement.options.length; i++) {
+		var opt = selectElement.options[i];
+
+		if (opt.selected) {
+			optsStr += opt.value + ",";
+		}
+	}
+
+	var inputElement = document.getElementById(selectId + "_text");
+	inputElement.value = optsStr;
+}
+
+// ]]>
+</script>
