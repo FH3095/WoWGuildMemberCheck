@@ -18,6 +18,8 @@ class add_settings extends migration
 			array('config.add', array('wowmembercheck_group_remove_inguild', '')),
 			array('config.add', array('wowmembercheck_group_add_outofguild', '')),
 			array('config.add', array('wowmembercheck_group_remove_outofguild', '')),
+			array('config.add', array('wowmembercheck_cron_interval', 60)),
+			array('config.add', array('wowmembercheck_cron_lastrun', 0)),
 		);
 	}
 }

@@ -36,13 +36,15 @@ services:
         tags:
             - { name: event.listener }
 
-    FH3095.WoWGuildMemberCheck.cron.task.demo:
-        class: FH3095\WoWGuildMemberCheck\cron\task\demo
+    FH3095.WoWGuildMemberCheck.cron.task.crontask:
+        class: FH3095\WoWGuildMemberCheck\cron\task\crontask
         arguments:
             - '@config'
             - '@FH3095.WoWGuildMemberCheck.service'
+            - '@user'
+            - '@log'
             - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
         calls:
-            - [set_name, [cron.task.demo]]
+            - [set_name, [cron.task.wowguildmembercheck_crontask]]
         tags:
             - { name: cron.task }

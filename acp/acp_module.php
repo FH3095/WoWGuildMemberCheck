@@ -33,14 +33,15 @@ class acp_module {
 			'wowmembercheck_guild_server'		=> array('lang' => 'WOW_GUILD_SERVER',	'validate' => 'string',	'type' => 'text:33',	'explain' => false),
 			'wowmembercheck_guild_region'		=> array('lang'	=> 'WOW_GUILD_REGION',	'validate' => 'string', 'type' => 'select',		'explain' => false,
 				'method' => 'region_select'),
-			'wowmembercheck_group_add_inguild'		=> array('lang'	=> 'WOW_GROUP_ADD_INGUILD',	'validate' => 'string', 'type' => 'custom',	'explain' => false,
+			'wowmembercheck_group_add_inguild'			=> array('lang'	=> 'WOW_GROUP_ADD_INGUILD',			'validate' => 'string', 'type' => 'custom',	'explain' => false,
 				'method' => 'get_groups'),
-			'wowmembercheck_group_remove_inguild'		=> array('lang'	=> 'WOW_GROUP_REMOVE_INGUILD',	'validate' => 'string', 'type' => 'custom',	'explain' => false,
+			'wowmembercheck_group_remove_inguild'		=> array('lang'	=> 'WOW_GROUP_REMOVE_INGUILD',		'validate' => 'string', 'type' => 'custom',	'explain' => false,
 				'method' => 'get_groups'),
-			'wowmembercheck_group_add_outofguild'		=> array('lang'	=> 'WOW_GROUP_ADD_OUTOFGUILD',	'validate' => 'string', 'type' => 'custom',	'explain' => false,
+			'wowmembercheck_group_add_outofguild'		=> array('lang'	=> 'WOW_GROUP_ADD_OUTOFGUILD',		'validate' => 'string', 'type' => 'custom',	'explain' => false,
 				'method' => 'get_groups'),
 			'wowmembercheck_group_remove_outofguild'	=> array('lang'	=> 'WOW_GROUP_REMOVE_OUTOFGUILD',	'validate' => 'string', 'type' => 'custom',	'explain' => false,
 				'method' => 'get_groups'),
+			'wowmembercheck_cron_interval'				=> array('lang' => 'WOW_CRON_INTERVAL', 'validate' => 'int:1:10080', 'type' => 'number:1:10080', 'explain' => false),
 			'legend4'				=> 'ACP_SUBMIT_CHANGES',
 		);
 
