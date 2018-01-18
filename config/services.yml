@@ -10,7 +10,10 @@ services:
             - '@user'
             - '@request'
             - '@dbal.conn'
+            - %core.root_path%
+            - .%core.php_ext%
             - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
+            - '%tables.user_group%'
 
 
     FH3095.WoWGuildMemberCheck.controller:
@@ -41,6 +44,7 @@ services:
         arguments:
             - '@config'
             - '@FH3095.WoWGuildMemberCheck.service'
+            - '@dbal.conn'
             - '@user'
             - '@log'
             - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'

@@ -25,6 +25,8 @@ class service
 
 	protected $table_name;
 
+	protected $table_user_group;
+
 	protected $request;
 
 	protected $session;
@@ -35,16 +37,33 @@ class service
 
 	protected $db;
 
+	public static function get_compare_func_for_char_arrays() {
+		$compareFunc = function($c1, $c2) {
+			$ret = strcasecmp($c1['server'], $c2['server']);
+			if($ret != 0) {
+				return $ret;
+			}
+			return strcasecmp($c1['name'], $c2['name']);
+		};
+		return $compareFunc;
+	}
 
-	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\user $user, \phpbb\request\request $request, \phpbb\db\driver\driver_interface $db, $table_name)
+	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\user $user, \phpbb\request\request $request,
+		\phpbb\db\driver\driver_interface $db, $root_path, $php_ext, $table_name, $table_user_group)
 	{
 		$this->config = $config;
 		$this->helper = $helper;
 		$this->user = $user;
 		$this->table_name = $table_name;
+		$this->table_user_group = $table_user_group;
 		$this->request = $request;
 		$this->db = $db;
 		$this->session = null;
+
+		if(!function_exists('group_user_add'))
+		{
+			include($root_path . '/includes/functions_user' . $php_ext);
+		}
 	}
 
 	public function get_battle_net_service() {
@@ -78,17 +97,8 @@ class service
 			return false;
 		}
 
-		$compareFunc = function($c1, $c2) {
-			$ret = strcasecmp($c1['server'], $c2['server']);
-			if($ret != 0) {
-				return $ret;
-			}
-			$ret = strcasecmp($c1['name'], $c2['name']);
-			return $ret;
-		};
-
-		$toDelete = array_udiff($rowset, $characters, $compareFunc);
-		$toAdd = array_udiff($characters, $rowset, $compareFunc);
+		$toDelete = array_udiff($rowset, $characters, self::get_compare_func_for_char_arrays());
+		$toAdd = array_udiff($characters, $rowset, self::get_compare_func_for_char_arrays());
 
 		$this->db->sql_transaction('begin');
 		foreach($toDelete AS $char) {
@@ -101,6 +111,8 @@ class service
 				array('user_id' => $user_id, 'server' => $char['server'], 'name' => $char['name']));
 			$this->db->sql_query($sql);
 		}
+		$this->check_usergroups_for_add();
+		$this->check_usergroups_for_remove();
 		$this->db->sql_transaction('commit');
 		return true;
 	}
@@ -172,6 +184,121 @@ class service
 	public function delete_characters_for_user($user_ids) {
 		$sql = 'DELETE FROM ' . $this->table_name . ' WHERE ' . $this->db->sql_in_set('user_id', $user_ids);
 		$this->db->sql_query($sql);
+	}
+
+	private function compare_usergroups_with_characters($groups, $searchUsersToAdd) {
+		$columns = 'user_id';
+		if(!$searchUsersToAdd) {
+			$columns .= ',group_id';
+		}
+		$outerTable = $searchUsersToAdd ? $this->table_name : $this->table_user_group;
+		$innerTable = $searchUsersToAdd ? $this->table_user_group : $this->table_name;
+		$groupTableWhere = array('group_id','IN',$groups);
+		$subSelectQuery = array(
+			'SELECT'	=> 'user_id',
+			'FROM'		=> array($innerTable => 'table2'),
+		);
+		$outerWhere = array();
+
+		if(!$searchUsersToAdd) {
+			$outerWhere[] = $groupTableWhere;
+		} else {
+			$subSelectQuery['WHERE'] = array('AND', array($groupTableWhere));
+		}
+		// HACK: phpBB currently cant build subqueries via sql_build_query, see https://tracker.phpbb.com/browse/PHPBB3-15520
+		//$outerWhere[] = array('user_id', 'NOT IN', '', 'SELECT', $subSelectQuery);
+		$subSql = $this->db->sql_build_query('SELECT', $subSelectQuery);
+		$outerWhere[] = array('user_id NOT IN (' . $subSql . ')');
+		// HACK End
+
+		$sql = $this->db->sql_build_query('SELECT_DISTINCT', array(
+			'SELECT'	=> $columns,
+			'FROM'		=> array($outerTable => 'table1'),
+			'WHERE'		=> array('AND', $outerWhere),
+			'ORDER_BY'	=> $columns,
+		));
+		$result = $this->db->sql_query($sql);
+		$rowset = $this->db->sql_fetchrowset($result);
+		$this->db->sql_freeresult($result);
+		return $rowset;
+	}
+
+	private function change_user_groups($user_ids, $groupsToAdd, $groupsToRemove) {
+		$this->db->sql_transaction('begin');
+
+		foreach($groupsToAdd AS $group) {
+			\group_user_add((int)$group, $user_ids);
+		}
+		foreach($groupsToRemove AS $group) {
+			\group_user_del((int)$group, $user_ids);
+		}
+
+		$this->db->sql_transaction('commit');
+	}
+
+	public function check_usergroups_for_remove() {
+		$inGuildGroups = explode(',', $this->config['wowmembercheck_inguild_groups']);
+		$removedUsersGroups = explode(',', $this->config['wowmembercheck_removed_users_groups']);
+
+		$toRemoveUsers = $this->compare_usergroups_with_characters($inGuildGroups, false);
+		$user_ids = array();
+		foreach($toRemoveUsers as $user) {
+			$user_ids[] = (int)$user['user_id'];
+		}
+
+		$this->change_user_groups($user_ids, $removedUsersGroups, $inGuildGroups);
+
+		return count($user_ids);
+	}
+
+	public function check_usergroups_for_add() {
+		$inGuildGroups = explode(',', $this->config['wowmembercheck_inguild_groups']);
+		$removedUsersGroups = explode(',', $this->config['wowmembercheck_removed_users_groups']);
+
+		$toAddUsers = $this->compare_usergroups_with_characters($inGuildGroups, true);
+		$user_ids = array();
+		foreach($toAddUsers as $user) {
+			$user_ids[] = (int)$user['user_id'];
+		}
+
+		$this->change_user_groups($user_ids, $inGuildGroups, $removedUsersGroups);
+
+		return count($user_ids);
+	}
+
+	public function check_to_remove_users_from_groups() {
+		if(empty($user_ids)) {
+			return 0;
+		}
+		$sql = $this->db->sql_build_query('SELECT_DISTINCT', array(
+			'SELECT'	=> 'user_id',
+			'FROM'		=> array($this->table_name => 'c2u'),
+			'WHERE'		=> $this->db->sql_in_set('user_id', $user_ids),
+		));
+		$result = $this->db->sql_query($sql);
+		$deletedUserIds = array_fill_keys($user_ids, true);
+		while($row = $this->db->sql_fetchrow($result)) {
+			unset($deletedUserIds[(int)$row['user_id']]);
+		}
+		$deletedUserIds = array_keys($deletedUserIds);
+		$this->db->sql_freeresult($result);
+
+		$toAddGroups = explode(',', $this->config['wowmembercheck_group_add_outofguild']);
+		$toDelGroups = explode(',', $this->config['wowmembercheck_group_remove_outofguild']);
+
+		if(empty($deletedUserIds)) {
+			return 0;
+		}
+
+		$this->db->sql_transaction('begin');
+		foreach($toAddGroups AS $group) {
+			\group_user_add((int)$group, $deletedUserIds);
+		}
+		foreach($toDelGroups AS $group) {
+			\group_user_del((int)$group, $deletedUserIds);
+		}
+		$this->db->sql_transaction('commit');
+		return count($deletedUserIds);
 	}
 
 	protected static function get_character_session_key() {

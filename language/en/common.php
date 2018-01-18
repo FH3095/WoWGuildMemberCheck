@@ -22,6 +22,6 @@ $lang = array_merge($lang, array(
 	'WOW_GUILD_MEMBER_CHECK_BATTLENET_ACCESS_DENIED'	=> 'Battle.Net access denied.',
 	'WOW_GUILD_MEMBER_CHECK_BATTLENET_SUCCESS'			=> 'Battle.Net characters fetched successfully. Characters in guild: ',
 	'WOW_GUILD_MEMBER_CHECK_CHARACTERS_IN_GUILD'		=> 'Characters in guild',
-	'WOW_GUILD_MEMBER_CHECK_CRON_RAN'	=> '<strong>WoW Guild Member Check Cron ran</strong><br/>&raquo; New characters: %d | Deleted characters: %d | Added users: %d | Removed users: %d',
+	'WOW_GUILD_MEMBER_CHECK_CRON_RAN'	=> '<strong>WoW Guild Member Check Cron ran</strong><br/>&raquo; Deleted characters: %d | Users add to groups: %d | Users removed from groups: %d',
 	'WOW_GUILD_MEMBER_CHECK_CRON_ERROR'	=> '<strong>WoW Guild Member Check Cron error</strong><br/>&raquo; %s<br/>%s',
 ));
