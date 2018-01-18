@@ -61,7 +61,19 @@ class service
 	}
 
 	public function update_user_characters($characters) {
-		$rowset = $this->get_wow_characters_from_db();
+		if($this->user == null || !($this->user->data['user_type'] == USER_NORMAL || $this->user->data['user_type'] == USER_FOUNDER)) {
+			return false;
+		}
+		return $this->update_user_characters_for_user((int)$this->user->data['user_id'], $characters);
+	}
+
+	public function update_user_characters_for_user($user_id, $characters) {
+		$user_id = (int)$user_id;
+		if($user_id == ANONYMOUS) {
+			return false;
+		}
+
+		$rowset = $this->get_wow_characters_from_db_for_user($user_id);
 		if(null === $rowset) {
 			return false;
 		}
@@ -81,12 +93,12 @@ class service
 		$this->db->sql_transaction('begin');
 		foreach($toDelete AS $char) {
 			$sql = 'DELETE FROM ' . $this->table_name . ' WHERE ' . $this->db->sql_build_array('DELETE',
-				array('user_id' => $this->user->data['user_id'], 'server' => $char['server'], 'name' => $char['name']));
+				array('user_id' => $user_id, 'server' => $char['server'], 'name' => $char['name']));
 			$this->db->sql_query($sql);
 		}
 		foreach($toAdd AS $char) {
 			$sql = 'INSERT INTO ' . $this->table_name . ' ' . $this->db->sql_build_array('INSERT',
-				array('user_id' => $this->user->data['user_id'], 'server' => $char['server'], 'name' => $char['name']));
+				array('user_id' => $user_id, 'server' => $char['server'], 'name' => $char['name']));
 			$this->db->sql_query($sql);
 		}
 		$this->db->sql_transaction('commit');
@@ -119,21 +131,29 @@ class service
 		return $characters;
 	}
 
-	public function get_wow_characters_from_db() {
-		if($this->user == null || $this->user->data['user_id'] == ANONYMOUS || !($this->user->data['user_type'] == USER_NORMAL || $this->user->data['user_type'] == USER_FOUNDER)) {
+	public function get_wow_characters_from_db_for_user($user_id) {
+		$user_id = (int)$user_id;
+		if($user_id == ANONYMOUS) {
 			return null;
 		}
 
 		$sql = $this->db->sql_build_query('SELECT', array(
 			'SELECT'	=> 'char_id,server,name',
 			'FROM'		=> array($this->table_name => 'c2u'),
-			'WHERE'		=> 'user_id = ' . ((int)$this->user->data['user_id']),
+			'WHERE'		=> 'user_id = ' . ((int)$user_id),
 		));
 		$result = $this->db->sql_query($sql);
 		$rowset = $this->db->sql_fetchrowset($result);
 		$this->db->sql_freeresult($result);
 
 		return $rowset;
+	}
+
+	public function get_wow_characters_from_db() {
+		if($this->user == null || !($this->user->data['user_type'] == USER_NORMAL || $this->user->data['user_type'] == USER_FOUNDER)) {
+			return null;
+		}
+		return $this->get_wow_characters_from_db_for_user((int)$this->user->data['user_id']);
 	}
 
 	public function start_session() {
@@ -147,6 +167,11 @@ class service
 		$this->request->disable_super_globals();
 
 		return $this->session;
+	}
+
+	public function delete_characters_for_user($user_ids) {
+		$sql = 'DELETE FROM ' . $this->table_name . ' WHERE ' . $this->db->sql_in_set('user_id', $user_ids);
+		$this->db->sql_query($sql);
 	}
 
 	protected static function get_character_session_key() {
