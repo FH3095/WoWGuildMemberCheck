@@ -49,7 +49,7 @@ class service
 	}
 
 	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\user $user, \phpbb\request\request $request,
-		\phpbb\db\driver\driver_interface $db, $root_path, $php_ext, $table_name, $table_user_group)
+		\phpbb\db\driver\driver_interface $db, $root_path, $php_ext, $table_name, $table_user_group, $table_profile_fields, $table_profile_fields_data)
 	{
 		$this->config = $config;
 		$this->helper = $helper;

@@ -14,6 +14,8 @@ services:
             - .%core.php_ext%
             - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
             - '%tables.user_group%'
+            - '%tables.profile_fields%'
+            - '%tables.profile_fields_data%'
 
 
     FH3095.WoWGuildMemberCheck.controller:
