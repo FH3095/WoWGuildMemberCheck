@@ -24,7 +24,12 @@ class crontask extends \phpbb\cron\task\base
 	}
 
 	public function run() {
-		$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'WOW_GUILD_MEMBER_CHECK_CRON_RAN', false, array(1,2,3,4));
+		try {
+			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'WOW_GUILD_MEMBER_CHECK_CRON_RAN', false, array(1,2,3,4));
+			throw new \Exception("aaa");
+		} catch (\Exception $e) {
+			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'WOW_GUILD_MEMBER_CHECK_CRON_ERROR', false, array($e->getMessage(), nl2br($e->getTraceAsString(), true)));
+		}
 		// Run your cron actions here...
 
 		$this->config->set('wowmembercheck_cron_lastrun', time(), false);
