@@ -52,19 +52,6 @@ class main
 		$battlenetService = $this->service->get_battle_net_service();
 
 
-		if($this->request->is_set('go')) {
-			if($this->request->variable('go', 0) == 1) {
-				$session->invalidate();
-				$url = $battlenetService->getAuthorizationUri();
-				header( 'Location: ' . $url );
-				exit;
-			} elseif($this->request->variable('go', 0) == 2) {
-				$session->remove('wowmembercheck_characters');
-				header('Location: ' . $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '0')));
-				exit;
-			}
-		}
-
 		if($this->service->get_user_characters_from_session() == null) {
 			if($battlenetService->getStorage()->hasAccessToken($battlenetService->service()) || $this->request->is_set('code')) {
 				$characters = $this->service->get_wow_characters($battlenetService, $this->request->variable('code', ''));

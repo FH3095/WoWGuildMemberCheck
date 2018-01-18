@@ -11,7 +11,6 @@ class main_listener implements EventSubscriberInterface
 	{
 		return array(
 			'core.user_setup'				=> 'load_language_on_setup',
-			//'core.page_header'				=> 'add_page_header_link',
 			'core.ucp_register_modify_template_data'	=> 'register_page',
 			'core.ucp_profile_modify_profile_info'		=> 'profile_page',
 			'core.user_add_after'						=> 'add_session_chars_to_db',
@@ -63,18 +62,6 @@ class main_listener implements EventSubscriberInterface
 			'lang_set' => 'common',
 		);
 		$event['lang_set_ext'] = $lang_set_ext;
-	}
-
-	/**
-	 * Add a link to the controller in the forum navbar
-	 */
-	public function add_page_header_link()
-	{
-		$this->template->assign_vars(array(
-			'U_DEMO_PAGE0'	=> $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '0')),
-			'U_DEMO_PAGE1'	=> $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '1')),
-			'U_DEMO_PAGE2'	=> $this->helper->route('FH3095_WoWGuildMemberCheck_OAuthTarget', array('go' => '2')),
-		));
 	}
 
 	public function register_page($event) {

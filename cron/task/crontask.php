@@ -107,6 +107,6 @@ class crontask extends \phpbb\cron\task\base
 	}
 
 	public function should_run() {
-		return $this->config['wowmembercheck_cron_lastrun'] < (time() - ($this->config['wowmembercheck_cron_interval'] * 1));
+		return $this->config['wowmembercheck_cron_lastrun'] < (time() - ($this->config['wowmembercheck_cron_interval'] * 60));
 	}
 }
