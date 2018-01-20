@@ -27,6 +27,10 @@ class service
 
 	protected $table_user_group;
 
+	protected $table_profile_fields;
+
+	protected $profilefields;
+
 	protected $request;
 
 	protected $session;
@@ -36,6 +40,8 @@ class service
 	protected $helper;
 
 	protected $db;
+
+	protected $profile_field_active;
 
 	public static function get_compare_func_for_char_arrays() {
 		$compareFunc = function($c1, $c2) {
@@ -49,13 +55,16 @@ class service
 	}
 
 	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\user $user, \phpbb\request\request $request,
-		\phpbb\db\driver\driver_interface $db, $root_path, $php_ext, $table_name, $table_user_group, $table_profile_fields, $table_profile_fields_data)
+		\phpbb\db\driver\driver_interface $db, \phpbb\profilefields\manager $profilefields, $root_path, $php_ext, $table_name, $table_user_group, $table_profile_fields)
 	{
+		$this->profile_field_active = null;
 		$this->config = $config;
 		$this->helper = $helper;
+		$this->profilefields = $profilefields;
 		$this->user = $user;
 		$this->table_name = $table_name;
 		$this->table_user_group = $table_user_group;
+		$this->table_profile_fields = $table_profile_fields;
 		$this->request = $request;
 		$this->db = $db;
 		$this->session = null;
@@ -113,6 +122,7 @@ class service
 		}
 		$this->check_usergroups_for_add();
 		$this->check_usergroups_for_remove();
+		$this->refresh_custom_field_for_users(array($user_id));
 		$this->db->sql_transaction('commit');
 		return true;
 	}
@@ -266,39 +276,48 @@ class service
 		return count($user_ids);
 	}
 
-	public function check_to_remove_users_from_groups() {
-		if(empty($user_ids)) {
-			return 0;
+	public function refresh_custom_field_for_users($user_ids) {
+		if($this->profile_field_active === null) {
+			$sql = $this->db->sql_build_query('SELECT', array(
+				'SELECT'	=> 'field_id',
+				'FROM'		=> array($this->table_profile_fields => 'pf'),
+				'WHERE'		=> array('AND', array(
+					array('field_name', 'IN', 'wowgmc_chars'),
+					array('field_active', 'IN', 1),
+				)),
+			));
+			$result = $this->db->sql_query($sql);
+			$this->profile_field_active = ($this->db->sql_fetchrow($result) != false);
+			$this->db->sql_freeresult($result);
 		}
-		$sql = $this->db->sql_build_query('SELECT_DISTINCT', array(
-			'SELECT'	=> 'user_id',
-			'FROM'		=> array($this->table_name => 'c2u'),
-			'WHERE'		=> $this->db->sql_in_set('user_id', $user_ids),
-		));
-		$result = $this->db->sql_query($sql);
-		$deletedUserIds = array_fill_keys($user_ids, true);
-		while($row = $this->db->sql_fetchrow($result)) {
-			unset($deletedUserIds[(int)$row['user_id']]);
-		}
-		$deletedUserIds = array_keys($deletedUserIds);
-		$this->db->sql_freeresult($result);
 
-		$toAddGroups = explode(',', $this->config['wowmembercheck_group_add_outofguild']);
-		$toDelGroups = explode(',', $this->config['wowmembercheck_group_remove_outofguild']);
-
-		if(empty($deletedUserIds)) {
-			return 0;
+		if(!$this->profile_field_active) {
+			return;
 		}
 
 		$this->db->sql_transaction('begin');
-		foreach($toAddGroups AS $group) {
-			\group_user_add((int)$group, $deletedUserIds);
-		}
-		foreach($toDelGroups AS $group) {
-			\group_user_del((int)$group, $deletedUserIds);
+		foreach($user_ids AS $user_id) {
+			if($user_id == ANONYMOUS || $user_id == 0) {
+				continue;
+			}
+			$charStr = "";
+			$sql = $this->db->sql_build_query('SELECT', array(
+				'SELECT'	=> 'name,server',
+				'FROM'		=> array($this->table_name => 'c2u'),
+				'WHERE'		=> array('user_id', '=', $user_id),
+			));
+			$result = $this->db->sql_query($sql);
+			while($row = $this->db->sql_fetchrow($result)) {
+				if(!empty($charStr)) {
+					$charStr .= ', ';
+				}
+				$charStr .= $row['name'] . '-' . $row['server'];
+			}
+			$this->db->sql_freeresult($result);
+
+			$this->profilefields->update_profile_field_data(intval($user_id), array('pf_wowgmc_chars' => $charStr));
 		}
 		$this->db->sql_transaction('commit');
-		return count($deletedUserIds);
 	}
 
 	protected static function get_character_session_key() {

@@ -10,6 +10,7 @@ services:
             - '@user'
             - '@request'
             - '@dbal.conn'
+            - '@profilefields.manager'
             - %core.root_path%
             - .%core.php_ext%
             - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'

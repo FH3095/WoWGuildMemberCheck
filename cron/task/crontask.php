@@ -93,11 +93,16 @@ class crontask extends \phpbb\cron\task\base
 			return 0;
 		}
 		$charIds = array();
+		$userIds = array();
 		foreach($toDelete as $char) {
 			$charIds[] = (int)$char['char_id'];
+			$userIds[intval($char['user_id'])] = true;
 		}
+
 		$sql = 'DELETE FROM ' . $this->table_name . ' WHERE ' . $this->db->sql_in_set('char_id', $charIds);
 		$this->db->sql_query($sql);
+
+		$this->service->refresh_custom_field_for_users(array_keys($userIds));
 
 		return count($charIds);
 	}
