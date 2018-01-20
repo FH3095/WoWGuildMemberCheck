@@ -236,11 +236,11 @@ class service
 	private function change_user_groups($user_ids, $groupsToAdd, $groupsToRemove) {
 		$this->db->sql_transaction('begin');
 
-		foreach($groupsToAdd AS $group) {
-			\group_user_add((int)$group, $user_ids);
-		}
 		foreach($groupsToRemove AS $group) {
 			\group_user_del((int)$group, $user_ids);
+		}
+		foreach($groupsToAdd AS $group) {
+			\group_user_add((int)$group, $user_ids, false, false, true);
 		}
 
 		$this->db->sql_transaction('commit');
