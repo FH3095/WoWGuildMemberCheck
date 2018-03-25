@@ -33,12 +33,12 @@ class crontask extends \phpbb\cron\task\base
 	public function run() {
 		try {
 			$this->db->sql_transaction('begin');
-			$numDeletedChars = $this->update_characters_list();
+			$deletedChars = $this->update_characters_list();
 			$numAddedUsers = $this->service->check_usergroups_for_add();
 			$numRemovedUsers = $this->service->check_usergroups_for_remove();
 			$this->db->sql_transaction('commit');
 			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'WOW_GUILD_MEMBER_CHECK_CRON_RAN', false,
-				array($numDeletedChars, $numAddedUsers, $numRemovedUsers));
+				array($deletedChars['count'], $deletedChars['names'], $numAddedUsers, $numRemovedUsers));
 		} catch (\Exception $e) {
 			$this->log->add('admin', $this->user->data['user_id'], $this->user->ip, 'WOW_GUILD_MEMBER_CHECK_CRON_ERROR', false, array($e->getMessage(), nl2br($e->getTraceAsString(), true)));
 		}
@@ -93,9 +93,14 @@ class crontask extends \phpbb\cron\task\base
 			return 0;
 		}
 		$charIds = array();
+		$charNames = '';
 		$userIds = array();
 		foreach($toDelete as $char) {
 			$charIds[] = (int)$char['char_id'];
+			if(!empty($charNames)) {
+				$charNames .= ', ';
+			}
+			$charNames .= $char['name'] . '-' . $char['server'];
 			$userIds[intval($char['user_id'])] = true;
 		}
 
@@ -104,7 +109,7 @@ class crontask extends \phpbb\cron\task\base
 
 		$this->service->refresh_custom_field_for_users(array_keys($userIds));
 
-		return count($charIds);
+		return array('count' => count($charIds), 'names' => $charNames);
 	}
 
 	public function is_runnable() {
