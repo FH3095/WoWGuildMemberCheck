@@ -18,16 +18,14 @@ class crontask extends \phpbb\cron\task\base
 	protected $user;
 	protected $log;
 	protected $db;
-	protected $table_name;
 
 	public function __construct(\phpbb\config\config $config, \FH3095\WoWGuildMemberCheck\service $service, \phpbb\db\driver\driver_interface $db,
-		\phpbb\user $user, \phpbb\log\log $log, $char_table) {
+		\phpbb\user $user, \phpbb\log\log $log) {
 		$this->config = $config;
 		$this->service = $service;
 		$this->user = $user;
 		$this->log = $log;
 		$this->db = $db;
-		$this->table_name = $char_table;
 	}
 
 	public function run() {

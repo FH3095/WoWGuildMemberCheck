@@ -2,8 +2,6 @@
 
 namespace FH3095\WoWGuildMemberCheck\acp;
 
-use OAuth\OAuth2\Service\BattleNet;
-
 // Code heavily inspired by and copied from paul999/ajaxshoutbox
 
 class acp_module {
@@ -26,12 +24,18 @@ class acp_module {
 
 		$display_vars = array(
 			'legend1'				=> 'ACP_WOW_GUILD_MEMBER_CHECK_SETTINGS',
-			'wowmembercheck_client_id'			=> array('lang' => 'WOW_CLIENT_ID',		'validate' => 'string',	'type' => 'text:33',	'explain' => true),
-			'wowmembercheck_client_secret'		=> array('lang' => 'WOW_CLIENT_SECRET',	'validate' => 'string',	'type' => 'text:33',	'explain' => false),
-			'wowmembercheck_guild_name'			=> array('lang' => 'WOW_GUILD_NAME',	'validate' => 'string',	'type' => 'text:33',	'explain' => false),
-			'wowmembercheck_guild_server'		=> array('lang' => 'WOW_GUILD_SERVER',	'validate' => 'string',	'type' => 'text:33',	'explain' => false),
-			'wowmembercheck_guild_region'		=> array('lang'	=> 'WOW_GUILD_REGION',	'validate' => 'string', 'type' => 'select',		'explain' => false,
-				'method' => 'region_select'),
+			'wowmembercheck_webservice_url'			=> array('lang' => 'WOW_WEBSERVICE_URL',
+				'validate' => 'string',	'type' => 'text',	'explain' => true),
+			'wowmembercheck_webservice_guildId'		=> array('lang' => 'WOW_WEBSERVICE_GUILDID',
+				'validate' => 'int:1:2000000',	'type' => 'number:1:2000000',	'explain' => false),
+			'wowmembercheck_webservice_apiKey'		=> array('lang' => 'WOW_WEBSERVICE_APIKEY',
+				'validate' => 'string',	'type' => 'text',	'explain' => false),
+			'wowmembercheck_webservice_macKey'		=> array('lang' => 'WOW_WEBSERVICE_MACKEY',
+				'validate' => 'string',	'type' => 'text',	'explain' => false),
+			'wowmembercheck_webservice_systemName'	=> array('lang'	=> 'WOW_WEBSERVICE_SYSTEMNAME',
+				'validate' => 'string', 'type' => 'text',	'explain' => false),
+			'wowmembercheck_webservice_afterAuthRedirectTo'	=> array('lang'	=> 'WOW_WEBSERVICE_AFTERAUTHREDIRECTTO',
+				'validate' => 'string', 'type' => 'text',	'explain' => false),
 			'wowmembercheck_inguild_groups'		=> array('lang'	=> 'WOW_INGUILD_GROUPS',	'validate' => 'string', 'type' => 'custom',	'explain' => true,
 				'method' => 'get_groups'),
 			'wowmembercheck_removed_users_groups'	=> array('lang'	=> 'WOW_OUTOFGUILD_GROUPS',	'validate' => 'string', 'type' => 'custom',	'explain' => true,
@@ -155,26 +159,6 @@ class acp_module {
 		$ret .= '</select><br/>';
 		$ret .= '<input type="text" value="' . $value . '" name="config[' . $key . ']" id="' . $key .  '_text" readonly="readonly" />';
 
-		return $ret;
-	}
-
-	public function region_select($value, $key) {
-		global $user;
-
-		$ret = "\n";
-		$regions = array(
-			$user->lang['WOW_PLEASE_SELECT']  => '',
-			'US' => BattleNet::API_URI_US,
-			'EU' => BattleNet::API_URI_EU,
-			'KR' => BattleNet::API_URI_KR,
-			'TW' => BattleNet::API_URI_TW,
-			'CN' => BattleNet::API_URI_CN,
-			'SEA' => BattleNet::API_URI_SEA,
-		);
-
-		foreach($regions AS $regKey => $regValue) {
-			$ret .= '<option value="' . $regValue . '" ' . (($value == $regValue) ? 'selected="selected"' : '') . '>' . $regKey . '</option>'  . "\n";
-		}
 		return $ret;
 	}
 }

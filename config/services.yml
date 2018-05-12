@@ -1,6 +1,3 @@
-imports:
-    - { resource: tables.yml }
-
 services:
     FH3095.WoWGuildMemberCheck.service:
         class: FH3095\WoWGuildMemberCheck\service
@@ -13,11 +10,8 @@ services:
             - '@profilefields.manager'
             - %core.root_path%
             - .%core.php_ext%
-            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
             - '%tables.user_group%'
             - '%tables.profile_fields%'
-            - '%tables.profile_fields_data%'
-
 
     FH3095.WoWGuildMemberCheck.controller:
         class: FH3095\WoWGuildMemberCheck\controller\main
@@ -28,17 +22,12 @@ services:
             - '@user'
             - '@request'
             - '@FH3095.WoWGuildMemberCheck.service'
-            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
 
     FH3095.WoWGuildMemberCheck.listener:
         class: FH3095\WoWGuildMemberCheck\event\main_listener
         arguments:
-            - '@controller.helper'
             - '@template'
-            - '@user'
-            - '%core.php_ext%'
             - '@FH3095.WoWGuildMemberCheck.service'
-            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
         tags:
             - { name: event.listener }
 
@@ -50,7 +39,6 @@ services:
             - '@dbal.conn'
             - '@user'
             - '@log'
-            - '%FH3095.WoWGuildMemberCheck.tables.WowCharToUser%'
         calls:
             - [set_name, [cron.task.wowguildmembercheck_crontask]]
         tags:

@@ -36,7 +36,7 @@ class main
 	protected $service;
 
 	public function __construct(\phpbb\config\config $config, \phpbb\controller\helper $helper, \phpbb\template\template $template, \phpbb\user $user, \phpbb\request\request $request,
-			\FH3095\WoWGuildMemberCheck\service $service, $charTable)
+			\FH3095\WoWGuildMemberCheck\service $service)
 	{
 		$this->config = $config;
 		$this->helper = $helper;
@@ -48,6 +48,8 @@ class main
 
 	public function handleOAuthTarget()
 	{
+		$this->service->check_guild_groups();
+		return $this->helper->render('oauth_result_body.html');
 		$session = $this->service->start_session();
 		$battlenetService = $this->service->get_battle_net_service();
 
