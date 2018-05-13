@@ -10,8 +10,6 @@
  */
 namespace FH3095\WoWGuildMemberCheck\controller;
 
-use Symfony\Component\HttpFoundation\JsonResponse;
-
 /**
  * WoW Guild Member Check main controller.
  */
