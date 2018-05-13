@@ -3,14 +3,11 @@ services:
         class: FH3095\WoWGuildMemberCheck\service
         arguments:
             - '@config'
-            - '@controller.helper'
             - '@user'
-            - '@request'
             - '@dbal.conn'
             - '@profilefields.manager'
             - %core.root_path%
             - .%core.php_ext%
-            - '%tables.user_group%'
             - '%tables.profile_fields%'
 
     FH3095.WoWGuildMemberCheck.controller:

@@ -41,6 +41,7 @@ class acp_module {
 			'wowmembercheck_removed_users_groups'	=> array('lang'	=> 'WOW_OUTOFGUILD_GROUPS',	'validate' => 'string', 'type' => 'custom',	'explain' => true,
 				'method' => 'get_groups'),
 			'wowmembercheck_cron_interval'				=> array('lang' => 'WOW_CRON_INTERVAL', 'validate' => 'int:1:10080', 'type' => 'number:1:10080', 'explain' => true),
+			'wowmembercheck_cron_full_check_interval'	=> array('lang' => 'WOW_CRON_FULL_CHECK_INTERVAL', 'validate' => 'int:1:10080', 'type' => 'number:1:10080', 'explain' => true),
 			'legend4'				=> 'ACP_SUBMIT_CHANGES',
 		);
 
