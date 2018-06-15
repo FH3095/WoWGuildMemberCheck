@@ -84,8 +84,7 @@ class crontask extends \phpbb\cron\task\base
 					));
 			if ($isFullSyncNeeded)
 			{
-				$this->config->set('wowmembercheck_cron_lastfullcheck', time(),
-						false);
+				$this->config->set('wowmembercheck_cron_lastfullcheck', time());
 			}
 		}
 		catch (\Exception $e)
@@ -98,7 +97,7 @@ class crontask extends \phpbb\cron\task\base
 					));
 		}
 		
-		$this->config->set('wowmembercheck_cron_lastrun', time(), false);
+		$this->config->set('wowmembercheck_cron_lastrun', time());
 	}
 
 	public function is_runnable()
