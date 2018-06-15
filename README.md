@@ -8,7 +8,7 @@ Extension to sync a phpBB 3 forum user group with a word of warcraft guild.
 
 2) Go to "ACP" > "Customise" > "Extensions" and enable the "WoW Guild Member Check" extension.
 
-3) Set settings in phpBB administration area (which user group, check interval, guild name and server, required key for dev.battle.net, ...)
+3) Set settings in phpBB administration area (which user group, check interval, guild name and server, url to webservice, ...)
 
 
 ## Features
