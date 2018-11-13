@@ -34,4 +34,5 @@ $lang = array_merge($lang, array(
 	'WOW_WEBSERVICE_AFTERAUTHREDIRECTTO_EXPLAIN' => 'Page to show after user authorized us to fetch his characters. Usually &lt;Forum-URL&gt;/app.php/wowguildmembercheck/oauthtarget .',
 	'WOW_CRON_FULL_CHECK_INTERVAL' => 'Full check for guild groups',
 	'WOW_CRON_FULL_CHECK_INTERVAL_EXPLAIN' => 'After this interval all members of the guild-member-groups are checked.',
+	'WOW_AUTH_MSG' => 'Please authenticate forum with battle.net. <a href="%s">Help</a>'
 ));

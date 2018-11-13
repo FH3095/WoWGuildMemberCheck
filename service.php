@@ -15,6 +15,8 @@ class service
 	const PROFILE_FIELD_NAME = "wowgmc_chars";
 	protected $user;
 	protected $current_user_id;
+	protected $ask_for_auth_groups;
+	protected $ask_for_auth_help_link;
 	protected $groups_in_guild;
 	protected $groups_removed_users;
 	protected $table_profile_fields;
@@ -33,13 +35,16 @@ class service
 		$this->profilefields = $profilefields;
 		$this->user = $user;
 		$this->current_user_id = (int) $this->user->data['user_id'];
+		$this->ask_for_auth_groups = explode(',',
+				$this->config['wowmembercheck_ask_for_auth_groups']);
+		$this->ask_for_auth_help_link = $this->config['wowmembercheck_ask_for_auth_help_link'];
 		$this->groups_in_guild = explode(',',
 				$this->config['wowmembercheck_inguild_groups']);
 		$this->groups_removed_users = explode(',',
 				$this->config['wowmembercheck_removed_users_groups']);
 		$this->table_profile_fields = $table_profile_fields;
 		$this->db = $db;
-		
+
 		if (! function_exists('group_user_add'))
 		{
 			include ($root_path . '/includes/functions_user' . $php_ext);
@@ -53,17 +58,17 @@ class service
 		$macKey = $this->config['wowmembercheck_webservice_macKey'];
 		$systemName = $this->config['wowmembercheck_webservice_systemName'];
 		$redirectTarget = $this->config['wowmembercheck_webservice_afterAuthRedirectTo'];
-		
+
 		if (substr($baseUrl, - 1) !== "/")
 		{
 			$baseUrl = $baseUrl . "/";
 		}
-		
+
 		$macBinary = hash_hmac("sha256",
 				$guildId . $systemName . $this->current_user_id,
 				base64_decode($macKey, TRUE), TRUE);
 		$mac = base64_encode($macBinary);
-		
+
 		$authUrl = $baseUrl . "rest/auth/start?" . http_build_query(
 				array(
 					"guildId" => $guildId,
@@ -81,7 +86,7 @@ class service
 		{
 			return $this->profile_field_active;
 		}
-		
+
 		$sql = $this->db->sql_build_query('SELECT',
 				array(
 					'SELECT' => 'field_id',
@@ -107,7 +112,7 @@ class service
 		$result = $this->db->sql_query($sql);
 		$this->profile_field_active = ($this->db->sql_fetchrow($result) != false);
 		$this->db->sql_freeresult($result);
-		
+
 		return $this->profile_field_active;
 	}
 
@@ -123,16 +128,16 @@ class service
 		{
 			return "";
 		}
-		
+
 		$fields = $this->profilefields->grab_profile_fields_data($user_id);
 		$fields = array_shift($fields);
-		
+
 		if (! isset($fields[self::PROFILE_FIELD_NAME]) ||
-				 $fields[self::PROFILE_FIELD_NAME]["value"] == null)
+				$fields[self::PROFILE_FIELD_NAME]["value"] == null)
 		{
 			return "";
 		}
-		
+
 		return $fields[self::PROFILE_FIELD_NAME]["value"];
 	}
 
@@ -141,7 +146,7 @@ class service
 		$inGuildGroups = explode(',',
 				$this->config['wowmembercheck_inguild_groups']);
 		$groupMemberships = \group_memberships($inGuildGroups);
-		
+
 		foreach ($groupMemberships as $user)
 		{
 			$userIds[$user['user_id']] = TRUE;
@@ -157,11 +162,10 @@ class service
 		{
 			throw new \Exception(
 					'Cant query changes: ' . $response->getStatusCode() . ' ' .
-							 $response->getReasonPhrase() . ': ' .
-							 $response->getBody());
+					$response->getReasonPhrase() . ': ' . $response->getBody());
 		}
 		$changes = json_decode($response->getBody(), true);
-		
+
 		$lastId = - 1;
 		foreach ($changes as $change)
 		{
@@ -193,11 +197,11 @@ class service
 		}
 		$toResetRemoteCommandId = $this->get_to_update_user_ids_from_webservice(
 				$toUpdateUsers, $client);
-		
+
 
 		$guildGroupMembers = array();
 		$this->get_guild_groups_members($guildGroupMembers);
-		
+
 		$this->db->sql_transaction('begin');
 		$result = array();
 		foreach ($toUpdateUsers as $userId => $_)
@@ -206,7 +210,7 @@ class service
 					$userId);
 		}
 		$this->db->sql_transaction('commit');
-		
+
 		$this->reset_remote_commands($client, $toResetRemoteCommandId);
 		return $result;
 	}
@@ -242,12 +246,12 @@ class service
 		$guildId = (int) $this->config['wowmembercheck_webservice_guildId'];
 		$apiKey = $this->config['wowmembercheck_webservice_apiKey'];
 		$systemName = $this->config['wowmembercheck_webservice_systemName'];
-		
+
 		if (substr($url, - 1) !== "/")
 		{
 			$url = $url . "/";
 		}
-		
+
 		$url = $url . "rest/" . $guildId . "/" . $endpoint . "/" . $method . "?" . http_build_query(
 				array(
 					"systemName" => $systemName,
@@ -269,12 +273,12 @@ class service
 		{
 			$groupMemberships[] = (int) $groupMembership['group_id'];
 		}
-		
+
 		// Only add groups, when user is not already member of this group
 		$groupsToAdd = array_diff($groupsToAdd, $groupMemberships);
 		// Only remove group if user is member of this group
 		$groupsToRemove = array_intersect($groupsToRemove, $groupMemberships);
-		
+
 		foreach ($groupsToRemove as $group)
 		{
 			\group_user_del((int) $group, array(
@@ -313,13 +317,18 @@ class service
 			}
 			$charsStr = $charsStr . $char['name'] . "-" . $char['server'];
 		}
-		
+
 		if ($this->is_profile_field_active())
 		{
-			$this->profilefields->update_profile_field_data($userId,
-					array(
-						"pf_" . self::PROFILE_FIELD_NAME => $charsStr
-					));
+			if (empty($charsStr))
+			{}
+			else
+			{
+				$this->profilefields->update_profile_field_data($userId,
+						array(
+							"pf_" . self::PROFILE_FIELD_NAME => $charsStr
+						));
+			}
 		}
 		return $charsStr;
 	}
@@ -331,7 +340,7 @@ class service
 			'result' => '',
 			'characters' => ''
 		);
-		
+
 		$url = $this->construct_rest_url("chars", "get",
 				array(
 					"remoteAccountId" => $userId
@@ -341,12 +350,11 @@ class service
 		{
 			throw new \Exception(
 					"Cant fetch characters for " . $userId . ": " .
-							 $response->getStatusCode() . " " .
-							 $response->getReasonPhrase() . ": " .
-							 $response->getBody());
+					$response->getStatusCode() . " " .
+					$response->getReasonPhrase() . ": " . $response->getBody());
 		}
 		$characters = json_decode($response->getBody(), true);
-		
+
 		$this->db->sql_transaction('begin');
 		if (empty($characters) && ! empty($guildGroupMembers[$userId]))
 		{
@@ -365,7 +373,17 @@ class service
 					$characters);
 		}
 		$this->db->sql_transaction('commit');
-		
+
 		return $result;
+	}
+
+	public function getUserGroupsToAskForAuth()
+	{
+		return $this->ask_for_auth_groups;
+	}
+
+	public function getAskForAuthHelpLink()
+	{
+		return $this->ask_for_auth_help_link;
 	}
 }

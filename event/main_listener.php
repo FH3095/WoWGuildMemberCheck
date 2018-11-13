@@ -10,12 +10,15 @@ class main_listener implements EventSubscriberInterface
 	static public function getSubscribedEvents()
 	{
 		return array(
-			'core.user_setup' => 'load_language_on_setup',
+			'core.user_setup' => 'add_lang_to_user',
+			'core.user_setup_after' => 'page_set_footer',
 			'core.ucp_profile_modify_profile_info' => 'profile_page'
 		);
 	}
 	protected $template;
 	protected $service;
+	protected $user;
+	protected $notifactionManager;
 
 	/**
 	 * Constructor
@@ -30,10 +33,13 @@ class main_listener implements EventSubscriberInterface
 	 *        	phpEx
 	 */
 	public function __construct(\phpbb\template\template $template,
-			\FH3095\WoWGuildMemberCheck\service $service)
+			\FH3095\WoWGuildMemberCheck\service $service, \phpbb\user $user,
+			\phpbb\notification\manager $notificationManager)
 	{
 		$this->service = $service;
 		$this->template = $template;
+		$this->user = $user;
+		$this->notifactionManager = $notificationManager;
 	}
 
 	/**
@@ -42,7 +48,7 @@ class main_listener implements EventSubscriberInterface
 	 * @param \phpbb\event\data $event
 	 *        	Event object
 	 */
-	public function load_language_on_setup($event)
+	public function add_lang_to_user($event)
 	{
 		$lang_set_ext = $event['lang_set_ext'];
 		$lang_set_ext[] = array(
@@ -50,6 +56,21 @@ class main_listener implements EventSubscriberInterface
 			'lang_set' => 'common'
 		);
 		$event['lang_set_ext'] = $lang_set_ext;
+	}
+
+	public function page_set_footer($event)
+	{
+		$mainGroupId = $this->user->data['group_id'];
+		if (in_array($mainGroupId, $this->service->getUserGroupsToAskForAuth(),
+				false))
+		{
+			$this->template->assign_var('S_WOWMEMBERCHECK_SHOW_AUTH_NOTICE',
+					true);
+			$msg = sprintf($this->user->lang['WOW_AUTH_MSG'],
+					$this->service->getAskForAuthHelpLink());
+			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_MSG', $msg);
+			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_URL', $this->service->get_auth_url());
+		}
 	}
 
 	public function profile_page($event)

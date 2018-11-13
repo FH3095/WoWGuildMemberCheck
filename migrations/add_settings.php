@@ -15,6 +15,8 @@ class add_settings extends migration
 			array('config.add', array('wowmembercheck_webservice_macKey', '')),
 			array('config.add', array('wowmembercheck_webservice_systemName', 'Forum')),
 			array('config.add', array('wowmembercheck_webservice_afterAuthRedirectTo', '')),
+			array('config.add', array('wowmembercheck_ask_for_auth_help_link', '')),
+			array('config.add', array('wowmembercheck_ask_for_auth_groups', '')),
 			array('config.add', array('wowmembercheck_inguild_groups', '')),
 			array('config.add', array('wowmembercheck_removed_users_groups', '')),
 			array('config.add', array('wowmembercheck_cron_interval', 60)),
