@@ -33,13 +33,11 @@ class main_listener implements EventSubscriberInterface
 	 *        	phpEx
 	 */
 	public function __construct(\phpbb\template\template $template,
-			\FH3095\WoWGuildMemberCheck\service $service, \phpbb\user $user,
-			\phpbb\notification\manager $notificationManager)
+			\FH3095\WoWGuildMemberCheck\service $service, \phpbb\user $user)
 	{
 		$this->service = $service;
 		$this->template = $template;
 		$this->user = $user;
-		$this->notifactionManager = $notificationManager;
 	}
 
 	/**
@@ -66,9 +64,7 @@ class main_listener implements EventSubscriberInterface
 		{
 			$this->template->assign_var('S_WOWMEMBERCHECK_SHOW_AUTH_NOTICE',
 					true);
-			$msg = sprintf($this->user->lang['WOW_AUTH_MSG'],
-					$this->service->getAskForAuthHelpLink());
-			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_MSG', $msg);
+			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_HELP_LINK', $this->service->getAskForAuthHelpLink());
 			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_URL', $this->service->get_auth_url());
 		}
 	}

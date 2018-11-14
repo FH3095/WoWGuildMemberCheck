@@ -26,7 +26,6 @@ services:
             - '@template'
             - '@FH3095.WoWGuildMemberCheck.service'
             - '@user'
-            - '@notification_manager'
         tags:
             - { name: event.listener }
 
