@@ -23,6 +23,8 @@ class add_settings extends migration
 			array('config.add', array('wowmembercheck_cron_full_check_interval', 1440)),
 			array('config.add', array('wowmembercheck_cron_lastrun', 0)),
 			array('config.add', array('wowmembercheck_cron_lastfullcheck', 0)),
+			array('config.add', array('wowmembercheck_trial_rank', 100)),
+			array('config.add', array('wowmembercheck_trial_groups', '')),
 		);
 	}
 }

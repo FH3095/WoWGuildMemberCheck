@@ -22,6 +22,8 @@ class service
 	protected $table_profile_fields;
 	protected $profilefields;
 	protected $profile_field_active;
+	protected $trial_rank;
+	protected $trial_groups;
 	protected $config;
 	protected $db;
 
@@ -42,6 +44,9 @@ class service
 				$this->config['wowmembercheck_inguild_groups']);
 		$this->groups_removed_users = explode(',',
 				$this->config['wowmembercheck_removed_users_groups']);
+		$this->trial_rank = (int) $this->config['wowmembercheck_trial_rank'];
+		$this->trial_groups = explode(',',
+				$this->config['wowmembercheck_trial_groups']);
 		$this->table_profile_fields = $table_profile_fields;
 		$this->db = $db;
 
@@ -69,14 +74,15 @@ class service
 				base64_decode($macKey, TRUE), TRUE);
 		$mac = base64_encode($macBinary);
 
-		$authUrl = $baseUrl . "rest/auth/start?" . http_build_query(
-				array(
-					"guildId" => $guildId,
-					"systemName" => $systemName,
-					"remoteAccountId" => $this->current_user_id,
-					"redirectTo" => $redirectTarget,
-					"mac" => $mac
-				), null, "&", \PHP_QUERY_RFC3986);
+		$authUrl = $baseUrl . "rest/auth/start?" .
+				http_build_query(
+						array(
+							"guildId" => $guildId,
+							"systemName" => $systemName,
+							"remoteAccountId" => $this->current_user_id,
+							"redirectTo" => $redirectTarget,
+							"mac" => $mac
+						), null, "&", \PHP_QUERY_RFC3986);
 		return $authUrl;
 	}
 
@@ -252,15 +258,17 @@ class service
 			$url = $url . "/";
 		}
 
-		$url = $url . "rest/" . $guildId . "/" . $endpoint . "/" . $method . "?" . http_build_query(
-				array(
-					"systemName" => $systemName,
-					"apiKey" => $apiKey
-				), null, "&", \PHP_QUERY_RFC3986);
+		$url = $url . "rest/" . $guildId . "/" . $endpoint . "/" . $method . "?" .
+				http_build_query(
+						array(
+							"systemName" => $systemName,
+							"apiKey" => $apiKey
+						), null, "&", \PHP_QUERY_RFC3986);
 		if (! empty($queryParameters))
 		{
-			$url = $url . "&" . http_build_query($queryParameters, null, "&",
-					\PHP_QUERY_RFC3986);
+			$url = $url . "&" .
+					http_build_query($queryParameters, null, "&",
+							\PHP_QUERY_RFC3986);
 		}
 		return $url;
 	}

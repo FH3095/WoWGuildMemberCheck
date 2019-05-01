@@ -83,6 +83,19 @@ class acp_module
 				'explain' => true,
 				'method' => 'get_groups_custom'
 			),
+			'wowmembercheck_trial_rank' => array(
+				'lang' => 'WOW_TRIAL_RANK',
+				'validate' => 'int:1:2000000',
+				'type' => 'number:1:2000000',
+				'explain' => false
+			),
+			'wowmembercheck_trial_groups' => array(
+				'lang' => 'WOW_TRIAL_GROUPS',
+				'validate' => 'string',
+				'type' => 'custom',
+				'explain' => true,
+				'method' => 'get_groups_custom'
+			),
 			'wowmembercheck_removed_users_groups' => array(
 				'lang' => 'WOW_OUTOFGUILD_GROUPS',
 				'validate' => 'string',
