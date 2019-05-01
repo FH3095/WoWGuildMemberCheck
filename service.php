@@ -387,7 +387,7 @@ class service
 		foreach ($characters as $char)
 		{
 			if (is_numeric($char['rank']) &&
-					((int) $char['rank']) == $this->trial_rank)
+					((int) $char['rank']) >= $this->trial_rank)
 			{
 				$isTrailMember = true;
 				break;
