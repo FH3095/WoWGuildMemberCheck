@@ -273,7 +273,8 @@ class service
 		return $url;
 	}
 
-	private function change_user_groups($userId, $groupsToAdd, $groupsToRemove)
+	private function change_user_groups($userId, $groupsToAdd, $groupsToRemove,
+			$makeNewGroupsDefault = true)
 	{
 		$groupMembershipsData = \group_memberships(false, $userId);
 		$groupMemberships = array();
@@ -297,7 +298,7 @@ class service
 		{
 			\group_user_add((int) $group, array(
 				$userId
-			), false, false, true);
+			), false, false, $makeNewGroupsDefault);
 		}
 	}
 
@@ -379,6 +380,28 @@ class service
 			$result['result'] = "Updated";
 			$result['characters'] = $this->update_characters($userId,
 					$characters);
+		}
+
+		// Check trial member and assign group
+		$isTrailMember = false;
+		foreach ($characters as $char)
+		{
+			if (is_numeric($char['rank']) &&
+					((int) $char['rank']) == $this->trial_rank)
+			{
+				$isTrailMember = true;
+				break;
+			}
+		}
+		if ($isTrailMember)
+		{
+			$this->change_user_groups($userId, $this->trial_groups, array(),
+					false);
+		}
+		else
+		{
+			$this->change_user_groups($userId, array(), $this->trial_groups,
+					false);
 		}
 		$this->db->sql_transaction('commit');
 

@@ -87,7 +87,7 @@ class acp_module
 				'lang' => 'WOW_TRIAL_RANK',
 				'validate' => 'int:1:2000000',
 				'type' => 'number:1:2000000',
-				'explain' => false
+				'explain' => true,
 			),
 			'wowmembercheck_trial_groups' => array(
 				'lang' => 'WOW_TRIAL_GROUPS',
