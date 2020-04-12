@@ -110,6 +110,7 @@ class service
 		$charSync = array_diff($currentMembers, $toDel);
 
 		$this->db->sql_transaction('begin');
+		$chars = array();
 		foreach ($toAdd as $id)
 		{
 			$this->change_user_groups($id, $this->groups_in_guild,
@@ -124,16 +125,14 @@ class service
 		}
 		foreach ($charSync as $id)
 		{
-			$this->update_characters_and_rank($id);
+			$chars[$id] = $this->update_characters_and_rank($id);
 		}
 		$this->db->sql_transaction('commit');
 
 		$result = array();
 		foreach ($toAdd as $id)
 		{
-			$result[$id] = $this->build_sync_result("Added",
-					$this->profileFieldHelper->get_user_characters_from_profile_field(
-							$id));
+			$result[$id] = $this->build_sync_result("Added", $chars[$id]);
 		}
 		foreach ($toDel as $id)
 		{
@@ -196,6 +195,7 @@ class service
 			$this->change_user_groups($user_id, array(), $this->trial_groups,
 					false);
 		}
+		return $charsStr;
 	}
 
 	private function build_sync_result($result, $characters)
