@@ -96,7 +96,7 @@ class service
 		}
 		else
 		{
-			return $this->build_sync_result("NotInGuild", array());
+			return $this->build_sync_result("NotInGuild", "");
 		}
 	}
 
