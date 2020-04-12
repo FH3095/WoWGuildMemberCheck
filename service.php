@@ -83,10 +83,8 @@ class service
 
 	public function sync_current_user()
 	{
-		$currentMembers = $this->get_guild_groups_members();
 		$restMembers = $this->restHelper->get_ids();
-		if (! in_array($this->current_user_id, $currentMembers) &&
-				in_array($this->current_user_id, $restMembers))
+		if (in_array($this->current_user_id, $restMembers))
 		{
 			$this->change_user_groups($this->current_user_id,
 					$this->groups_in_guild, $this->groups_removed_users);
