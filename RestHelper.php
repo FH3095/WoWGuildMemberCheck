@@ -12,7 +12,7 @@ class RestHelper
 	public function __construct(\phpbb\config\config $config, \phpbb\user $user)
 	{
 		$this->config = $config;
-		$this->current_user_id = (string) $this->user->data['user_id'];
+		$this->current_user_id = (string) $user->data['user_id'];
 		$this->baseUrl = $this->config['wowmembercheck_webservice_url'];
 		if (substr($this->baseUrl, - 1) !== "/")
 		{
@@ -88,7 +88,7 @@ class RestHelper
 					" " . $response->getReasonPhrase() . ": " .
 					$response->getBody());
 		}
-		$ids = json_decode($response->getBody(), true, null,
+		$ids = json_decode($response->getBody(), true, 512,
 				\JSON_THROW_ON_ERROR | \JSON_BIGINT_AS_STRING);
 
 		$result = array();
@@ -120,7 +120,7 @@ class RestHelper
 					" " . $response->getReasonPhrase() . ": " .
 					$response->getBody());
 		}
-		$chars = json_decode($response->getBody(), true, null,
+		$chars = json_decode($response->getBody(), true, 512,
 				\JSON_THROW_ON_ERROR | \JSON_BIGINT_AS_STRING);
 
 		return $chars;
