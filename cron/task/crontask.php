@@ -35,7 +35,7 @@ class crontask extends \phpbb\cron\task\base
 		try
 		{
 			$this->db->sql_transaction('begin');
-			$results = $this->service->do_sync();
+			$results = $this->service->sync_all();
 			$this->db->sql_transaction('commit');
 
 			$numbers = array();
