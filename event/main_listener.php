@@ -18,7 +18,8 @@ class main_listener implements EventSubscriberInterface
 	protected $template;
 	protected $service;
 	protected $user;
-	protected $notifactionManager;
+	protected $profileFieldHelper;
+	protected $restHelper;
 
 	/**
 	 * Constructor
@@ -33,11 +34,16 @@ class main_listener implements EventSubscriberInterface
 	 *        	phpEx
 	 */
 	public function __construct(\phpbb\template\template $template,
-			\FH3095\WoWGuildMemberCheck\service $service, \phpbb\user $user)
+			\FH3095\WoWGuildMemberCheck\service $service,
+			\FH3095\WoWGuildMemberCheck\ProfileFieldHelper $profileFieldHelper,
+			\FH3095\WoWGuildMemberCheck\RestHelper $restHelper,
+			\phpbb\user $user)
 	{
 		$this->service = $service;
 		$this->template = $template;
 		$this->user = $user;
+		$this->profileFieldHelper = $profileFieldHelper;
+		$this->restHelper = $restHelper;
 	}
 
 	/**
@@ -64,16 +70,18 @@ class main_listener implements EventSubscriberInterface
 		{
 			$this->template->assign_var('S_WOWMEMBERCHECK_SHOW_AUTH_NOTICE',
 					true);
-			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_HELP_LINK', $this->service->getAskForAuthHelpLink());
-			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_URL', $this->service->get_auth_url());
+			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_HELP_LINK',
+					$this->service->getAskForAuthHelpLink());
+			$this->template->assign_var('S_WOWMEMBERCHECK_AUTH_URL',
+					$this->restHelper->get_auth_url());
 		}
 	}
 
 	public function profile_page($event)
 	{
 		$this->template->assign_var('S_WOWMEMBERCHECK_CHARACTERS_IN_GUILD',
-				$this->service->get_current_user_characters_from_profile_field());
+				$this->profileFieldHelper->get_current_user_characters_from_profile_field());
 		$this->template->assign_var('S_WOWMEMBERCHECK_BNET_AUTH_PATH',
-				(string) ($this->service->get_auth_url()));
+				(string) ($this->restHelper->get_auth_url()));
 	}
 }

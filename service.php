@@ -12,16 +12,13 @@ namespace FH3095\WoWGuildMemberCheck;
 
 class service
 {
-	const PROFILE_FIELD_NAME = "wowgmc_chars";
 	protected $user;
 	protected $current_user_id;
 	protected $ask_for_auth_groups;
 	protected $ask_for_auth_help_link;
-	protected $groups_in_guild;
 	protected $groups_removed_users;
-	protected $table_profile_fields;
-	protected $profilefields;
-	protected $profile_field_active;
+	protected $profileFieldHelper;
+	protected $restHelper;
 	protected $trial_rank;
 	protected $trial_groups;
 	protected $config;
@@ -29,14 +26,13 @@ class service
 
 	public function __construct(\phpbb\config\config $config, \phpbb\user $user,
 			\phpbb\db\driver\driver_interface $db,
-			\phpbb\profilefields\manager $profilefields, $root_path, $php_ext,
-			$table_profile_fields)
+			\FH3095\WoWGuildMemberCheck\ProfileFieldHelper $profileFieldHelper,
+			\FH3095\WoWGuildMemberCheck\RestHelper $restHelper, $root_path,
+			$php_ext)
 	{
-		$this->profile_field_active = null;
 		$this->config = $config;
-		$this->profilefields = $profilefields;
 		$this->user = $user;
-		$this->current_user_id = (int) $this->user->data['user_id'];
+		$this->current_user_id = (string) $this->user->data['user_id'];
 		$this->ask_for_auth_groups = explode(',',
 				$this->config['wowmembercheck_ask_for_auth_groups']);
 		$this->ask_for_auth_help_link = $this->config['wowmembercheck_ask_for_auth_help_link'];
@@ -47,7 +43,8 @@ class service
 		$this->trial_rank = (int) $this->config['wowmembercheck_trial_rank'];
 		$this->trial_groups = explode(',',
 				$this->config['wowmembercheck_trial_groups']);
-		$this->table_profile_fields = $table_profile_fields;
+		$this->profileFieldHelper = $profileFieldHelper;
+		$this->restHelper = $restHelper;
 		$this->db = $db;
 
 		if (! function_exists('group_user_add'))
@@ -56,267 +53,119 @@ class service
 		}
 	}
 
-	public function get_auth_url()
+	private function get_guild_groups_members()
 	{
-		$baseUrl = $this->config['wowmembercheck_webservice_url'];
-		$guildId = (int) $this->config['wowmembercheck_webservice_guildId'];
-		$macKey = $this->config['wowmembercheck_webservice_macKey'];
-		$systemName = $this->config['wowmembercheck_webservice_systemName'];
-		$redirectTarget = $this->config['wowmembercheck_webservice_afterAuthRedirectTo'];
-
-		if (substr($baseUrl, - 1) !== "/")
-		{
-			$baseUrl = $baseUrl . "/";
-		}
-
-		$macBinary = hash_hmac("sha256",
-				$guildId . $systemName . $this->current_user_id,
-				base64_decode($macKey, TRUE), TRUE);
-		$mac = base64_encode($macBinary);
-
-		$authUrl = $baseUrl . "rest/auth/start?" .
-				http_build_query(
-						array(
-							"guildId" => $guildId,
-							"systemName" => $systemName,
-							"remoteAccountId" => $this->current_user_id,
-							"redirectTo" => $redirectTarget,
-							"mac" => $mac
-						), null, "&", \PHP_QUERY_RFC3986);
-		return $authUrl;
-	}
-
-	private function is_profile_field_active()
-	{
-		if ($this->profile_field_active !== null)
-		{
-			return $this->profile_field_active;
-		}
-
-		$sql = $this->db->sql_build_query('SELECT',
-				array(
-					'SELECT' => 'field_id',
-					'FROM' => array(
-						$this->table_profile_fields => 'pf'
-					),
-					'WHERE' => array(
-						'AND',
-						array(
-							array(
-								'field_name',
-								'IN',
-								self::PROFILE_FIELD_NAME
-							),
-							array(
-								'field_active',
-								'IN',
-								1
-							)
-						)
-					)
-				));
-		$result = $this->db->sql_query($sql);
-		$this->profile_field_active = ($this->db->sql_fetchrow($result) != false);
-		$this->db->sql_freeresult($result);
-
-		return $this->profile_field_active;
-	}
-
-	public function get_current_user_characters_from_profile_field()
-	{
-		return $this->get_user_characters_from_profile_field(
-				$this->current_user_id);
-	}
-
-	public function get_user_characters_from_profile_field($user_id)
-	{
-		if (! $this->is_profile_field_active())
-		{
-			return "";
-		}
-
-		$fields = $this->profilefields->grab_profile_fields_data($user_id);
-		$fields = array_shift($fields);
-
-		if (! isset($fields[self::PROFILE_FIELD_NAME]) ||
-				$fields[self::PROFILE_FIELD_NAME]["value"] == null)
-		{
-			return "";
-		}
-
-		return $fields[self::PROFILE_FIELD_NAME]["value"];
-	}
-
-	private function get_guild_groups_members(array & $userIds)
-	{
+		$result = array();
 		$inGuildGroups = explode(',',
 				$this->config['wowmembercheck_inguild_groups']);
 		$groupMemberships = \group_memberships($inGuildGroups);
 
 		foreach ($groupMemberships as $user)
 		{
-			$userIds[$user['user_id']] = TRUE;
+			$result[] = (string) $user['user_id'];
 		}
+		return $result;
 	}
 
-	private function get_to_update_user_ids_from_webservice(array & $userIds,
-			\GuzzleHttp\Client & $client)
+	private function get_groups_of_user($user_id)
 	{
-		$url = $this->construct_rest_url("changes", "get");
-		$response = $client->get($url, array());
-		if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299)
-		{
-			throw new \Exception(
-					'Cant query changes: ' . $response->getStatusCode() . ' ' .
-					$response->getReasonPhrase() . ': ' . $response->getBody());
-		}
-		$changes = json_decode($response->getBody(), true);
-
-		$lastId = - 1;
-		foreach ($changes as $change)
-		{
-			if ($lastId < $change['id'])
-			{
-				$lastId = $change['id'];
-			}
-			$userIds[$change['remoteAccountId']] = TRUE;
-		}
-		return $lastId;
-	}
-
-	private function reset_remote_commands(\GuzzleHttp\Client & $client, $lastId)
-	{
-		$url = $this->construct_rest_url("changes", "reset",
-				array(
-					"lastId" => $lastId
-				));
-		$client->get($url, array());
-	}
-
-	public function do_sync(bool $checkGroupMembers)
-	{
-		$client = $this->construct_client();
-		$toUpdateUsers = array();
-		if ($checkGroupMembers)
-		{
-			$this->get_guild_groups_members($toUpdateUsers);
-		}
-		$toResetRemoteCommandId = $this->get_to_update_user_ids_from_webservice(
-				$toUpdateUsers, $client);
-
-
-		$guildGroupMembers = array();
-		$this->get_guild_groups_members($guildGroupMembers);
-
-		$this->db->sql_transaction('begin');
 		$result = array();
-		foreach ($toUpdateUsers as $userId => $_)
-		{
-			$result[$userId] = $this->sync_user($client, $guildGroupMembers,
-					$userId);
-		}
-		$this->db->sql_transaction('commit');
+		$groups = \group_memberships(false, array(
+			$user_id
+		));
 
-		$this->reset_remote_commands($client, $toResetRemoteCommandId);
+		foreach ($groups as $group)
+		{
+			$result[] = (string) $group['group_id'];
+		}
 		return $result;
 	}
 
 	public function sync_current_user()
 	{
-		$client = $this->construct_client();
-		$guildGroupMembers = array();
-		$this->get_guild_groups_members($guildGroupMembers);
-		return $this->sync_user($client, $guildGroupMembers,
-				$this->current_user_id);
-	}
-
-	private function construct_client()
-	{
-		$client = new \GuzzleHttp\Client(
-				[
-					'defaults' => [
-						'allow_redirects' => true,
-						'cookies' => false,
-						'verify' => false,
-						'connect_timeout' => 10,
-						'timeout' => 10
-					]
-				]);
-		return $client;
-	}
-
-	private function construct_rest_url($endpoint, $method,
-			$queryParameters = null)
-	{
-		$url = $this->config['wowmembercheck_webservice_url'];
-		$guildId = (int) $this->config['wowmembercheck_webservice_guildId'];
-		$apiKey = $this->config['wowmembercheck_webservice_apiKey'];
-		$systemName = $this->config['wowmembercheck_webservice_systemName'];
-
-		if (substr($url, - 1) !== "/")
+		$currentMembers = $this->get_guild_groups_members();
+		$restMembers = $this->restHelper->get_ids();
+		if (! in_array($this->current_user_id, $currentMembers) &&
+				in_array($this->current_user_id, $restMembers))
 		{
-			$url = $url . "/";
+			$this->change_user_groups($this->current_user_id,
+					$this->groups_in_guild, $this->groups_removed_users);
+			return $this->update_characters_and_rank($this->current_user_id);
 		}
-
-		$url = $url . "rest/" . $guildId . "/" . $endpoint . "/" . $method . "?" .
-				http_build_query(
-						array(
-							"systemName" => $systemName,
-							"apiKey" => $apiKey
-						), null, "&", \PHP_QUERY_RFC3986);
-		if (! empty($queryParameters))
-		{
-			$url = $url . "&" .
-					http_build_query($queryParameters, null, "&",
-							\PHP_QUERY_RFC3986);
-		}
-		return $url;
 	}
 
-	private function change_user_groups($userId, $groupsToAdd, $groupsToRemove,
+	public function sync_all()
+	{
+		$currentMembers = $this->get_guild_groups_members();
+		$restMembers = $this->restHelper->get_ids();
+		$toAdd = array_diff($restMembers, $currentMembers);
+		$toDel = array_diff($currentMembers, $restMembers);
+		$charSync = array_diff($currentMembers, $toDel);
+
+		$this->db->sql_transaction('begin');
+		foreach ($toAdd as $id)
+		{
+			$this->change_user_groups($id, $this->groups_in_guild,
+					$this->groups_removed_users);
+		}
+		$groupsToRemoveFrom = array_unique(
+				array_merge($this->groups_in_guild, $this->trial_groups));
+		foreach ($toDel as $id)
+		{
+			$this->change_user_groups($id, $this->groups_removed_users,
+					$groupsToRemoveFrom);
+		}
+		foreach ($charSync as $id)
+		{
+			$this->update_characters_and_rank($id);
+		}
+		$this->db->sql_transaction('commit');
+
+		$result = array();
+		foreach ($toAdd as $id)
+		{
+			$result[$id] = array();
+			$result[$id]["result"] = "Added";
+			$result[$id]["characters"] = $this->profileFieldHelper->get_user_characters_from_profile_field(
+					$id);
+		}
+		foreach ($toDel as $id)
+		{
+			$result[$id] = array();
+			$result[$id]["result"] = "Removed";
+			$result[$id]["characters"] = $this->profileFieldHelper->get_user_characters_from_profile_field(
+					$id);
+		}
+		return $result;
+	}
+
+	private function change_user_groups($user_id, $groupsToAdd, $groupsToRemove,
 			$makeNewGroupsDefault = true)
 	{
-		$groupMembershipsData = \group_memberships(false, $userId);
-		$groupMemberships = array();
-		foreach ($groupMembershipsData as $groupMembership)
-		{
-			$groupMemberships[] = (int) $groupMembership['group_id'];
-		}
-
+		$existingUserGroups = $this->get_groups_of_user($user_id);
 		// Only add groups, when user is not already member of this group
-		$groupsToAdd = array_diff($groupsToAdd, $groupMemberships);
+		$groupsToAdd = array_diff($groupsToAdd, $existingUserGroups);
 		// Only remove group if user is member of this group
-		$groupsToRemove = array_intersect($groupsToRemove, $groupMemberships);
+		$groupsToRemove = array_intersect($groupsToRemove, $existingUserGroups);
 
 		foreach ($groupsToRemove as $group)
 		{
 			\group_user_del((int) $group, array(
-				$userId
+				(int) $user_id
 			));
 		}
 		foreach ($groupsToAdd as $group)
 		{
 			\group_user_add((int) $group, array(
-				$userId
+				(int) $user_id
 			), false, false, $makeNewGroupsDefault);
 		}
 	}
 
-	private function user_add($userId, $characters)
+	private function update_characters_and_rank($user_id)
 	{
-		$this->change_user_groups($userId, $this->groups_in_guild, array());
-		return $this->update_characters($userId, $characters);
-	}
-
-	private function user_remove($userId)
-	{
-		$this->change_user_groups($userId, $this->groups_removed_users,
-				$this->groups_in_guild);
-		return $this->update_characters($userId, array());
-	}
-
-	private function update_characters($userId, $characters)
-	{
+		$characters = $this->restHelper->get_characters($user_id);
+		$isTrial = false;
 		$charsStr = "";
 		foreach ($characters as $char)
 		{
@@ -325,87 +174,24 @@ class service
 				$charsStr = $charsStr . ", ";
 			}
 			$charsStr = $charsStr . $char['name'] . "-" . $char['server'];
-		}
-
-		if ($this->is_profile_field_active())
-		{
-			if (empty($charsStr))
-			{}
-			else
+			if ($char['rank'] == $this->trial_rank)
 			{
-				$this->profilefields->update_profile_field_data($userId,
-						array(
-							"pf_" . self::PROFILE_FIELD_NAME => $charsStr
-						));
+				$isTrial = true;
 			}
 		}
-		return $charsStr;
-	}
+		$this->profileFieldHelper->update_profile_field($user_id, $charsStr);
 
-	private function sync_user(\GuzzleHttp\Client & $client,
-			array $guildGroupMembers, $userId)
-	{
-		$result = array(
-			'result' => '',
-			'characters' => ''
-		);
-
-		$url = $this->construct_rest_url("chars", "get",
-				array(
-					"remoteAccountId" => $userId
-				));
-		$response = $client->get($url, array());
-		if ($response->getStatusCode() < 200 || $response->getStatusCode() > 299)
+		if ($isTrial == true)
 		{
-			throw new \Exception(
-					"Cant fetch characters for " . $userId . ": " .
-					$response->getStatusCode() . " " .
-					$response->getReasonPhrase() . ": " . $response->getBody());
-		}
-		$characters = json_decode($response->getBody(), true);
-
-		$this->db->sql_transaction('begin');
-		if (empty($characters) && ! empty($guildGroupMembers[$userId]))
-		{
-			$result['result'] = "Removed";
-			$this->user_remove($userId);
-		}
-		elseif (! empty($characters) && empty($guildGroupMembers[$userId]))
-		{
-			$result['result'] = "Added";
-			$result['characters'] = $this->user_add($userId, $characters);
-		}
-		elseif (! empty($characters))
-		{
-			$result['result'] = "Updated";
-			$result['characters'] = $this->update_characters($userId,
-					$characters);
-		}
-
-		// Check trial member and assign group
-		$isTrailMember = false;
-		foreach ($characters as $char)
-		{
-			if (is_numeric($char['rank']) &&
-					((int) $char['rank']) >= $this->trial_rank)
-			{
-				$isTrailMember = true;
-				break;
-			}
-		}
-		if ($isTrailMember)
-		{
-			$this->change_user_groups($userId, $this->trial_groups, array(),
+			$this->change_user_groups($user_id, $this->trial_groups, array(),
 					false);
 		}
 		else
 		{
-			$this->change_user_groups($userId, array(), $this->trial_groups,
+			$this->change_user_groups($user_id, array(), $this->trial_groups,
 					false);
 		}
-		$this->db->sql_transaction('commit');
-
-		return $result;
+		return $charsStr;
 	}
 
 	public function getUserGroupsToAskForAuth()

@@ -1,14 +1,27 @@
 services:
+    FH3095.WoWGuildMemberCheck.ProfileFieldHelper:
+        class: FH3095\WoWGuildMemberCheck\ProfileFieldHelper
+        arguments:
+            - '@user'
+            - '@dbal.conn'
+            - '@profilefields.manager'
+            - '%tables.profile_fields%'
+
+    FH3095.WoWGuildMemberCheck.RestHelper:
+        class: FH3095\WoWGuildMemberCheck\RestHelper
+        arguments:
+            - '@config'
+
     FH3095.WoWGuildMemberCheck.service:
         class: FH3095\WoWGuildMemberCheck\service
         arguments:
             - '@config'
             - '@user'
             - '@dbal.conn'
-            - '@profilefields.manager'
+            - '@FH3095.WoWGuildMemberCheck.ProfileFieldHelper'
+            - '@FH3095.WoWGuildMemberCheck.RestHelper'
             - %core.root_path%
             - .%core.php_ext%
-            - '%tables.profile_fields%'
 
     FH3095.WoWGuildMemberCheck.controller:
         class: FH3095\WoWGuildMemberCheck\controller\main
@@ -25,6 +38,8 @@ services:
         arguments:
             - '@template'
             - '@FH3095.WoWGuildMemberCheck.service'
+            - '@FH3095.WoWGuildMemberCheck.ProfileFieldHelper'
+            - '@FH3095.WoWGuildMemberCheck.RestHelper'
             - '@user'
         tags:
             - { name: event.listener }

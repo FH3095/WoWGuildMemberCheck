@@ -34,12 +34,10 @@ class crontask extends \phpbb\cron\task\base
 	{
 		try
 		{
-			$isFullSyncNeeded = $this->config['wowmembercheck_cron_lastfullcheck'] < (time() - $this->config['wowmembercheck_cron_full_check_interval'] *
-					 60);
 			$this->db->sql_transaction('begin');
-			$results = $this->service->do_sync($isFullSyncNeeded);
+			$results = $this->service->do_sync();
 			$this->db->sql_transaction('commit');
-			
+
 			$numbers = array();
 			$texts = array();
 			foreach ($results as $userId => $result)
@@ -50,7 +48,7 @@ class crontask extends \phpbb\cron\task\base
 					$numbers[$resultStr] = 0;
 					$texts[$resultStr] = "";
 				}
-				
+
 				$numbers[$resultStr] = $numbers[$resultStr] + 1;
 				$curText = $texts[$resultStr];
 				if (! empty($curText))
@@ -64,7 +62,7 @@ class crontask extends \phpbb\cron\task\base
 				}
 				$texts[$resultStr] = $curText;
 			}
-			
+
 			ksort($numbers);
 			$logText = "";
 			foreach ($numbers as $resultType => $resultTypeNumber)
@@ -74,18 +72,13 @@ class crontask extends \phpbb\cron\task\base
 					$logText = $logText . " ; ";
 				}
 				$logText = $logText . $resultType . ": " . $resultTypeNumber .
-						 " [" . $texts[$resultType] . "]";
+						" [" . $texts[$resultType] . "]";
 			}
 			$this->log->add('admin', $this->user->data['user_id'],
 					$this->user->ip, 'WOW_GUILD_MEMBER_CHECK_CRON_RAN', false,
 					array(
-						$isFullSyncNeeded ? "true" : "false",
 						$logText
 					));
-			if ($isFullSyncNeeded)
-			{
-				$this->config->set('wowmembercheck_cron_lastfullcheck', time());
-			}
 		}
 		catch (\Exception $e)
 		{
@@ -96,7 +89,7 @@ class crontask extends \phpbb\cron\task\base
 						nl2br($e->getTraceAsString(), true)
 					));
 		}
-		
+
 		$this->config->set('wowmembercheck_cron_lastrun', time());
 	}
 
@@ -108,6 +101,6 @@ class crontask extends \phpbb\cron\task\base
 	public function should_run()
 	{
 		return $this->config['wowmembercheck_cron_lastrun'] <
-				 (time() - ($this->config['wowmembercheck_cron_interval'] * 60));
+				(time() - ($this->config['wowmembercheck_cron_interval'] * 60));
 	}
 }

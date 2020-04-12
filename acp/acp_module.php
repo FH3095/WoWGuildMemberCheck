@@ -10,7 +10,6 @@ class acp_module
 	public $tpl_name;
 	const ARRAY_FIELDS = array(
 		'wowmembercheck_ask_for_auth_groups',
-		'wowmembercheck_inguild_groups',
 		'wowmembercheck_removed_users_groups'
 	);
 
@@ -32,18 +31,6 @@ class acp_module
 				'validate' => 'string',
 				'type' => 'text',
 				'explain' => true
-			),
-			'wowmembercheck_webservice_guildId' => array(
-				'lang' => 'WOW_WEBSERVICE_GUILDID',
-				'validate' => 'int:1:2000000',
-				'type' => 'number:1:2000000',
-				'explain' => false
-			),
-			'wowmembercheck_webservice_apiKey' => array(
-				'lang' => 'WOW_WEBSERVICE_APIKEY',
-				'validate' => 'string',
-				'type' => 'text',
-				'explain' => false
 			),
 			'wowmembercheck_webservice_macKey' => array(
 				'lang' => 'WOW_WEBSERVICE_MACKEY',
@@ -105,12 +92,6 @@ class acp_module
 			),
 			'wowmembercheck_cron_interval' => array(
 				'lang' => 'WOW_CRON_INTERVAL',
-				'validate' => 'int:1:10080',
-				'type' => 'number:1:10080',
-				'explain' => true
-			),
-			'wowmembercheck_cron_full_check_interval' => array(
-				'lang' => 'WOW_CRON_FULL_CHECK_INTERVAL',
 				'validate' => 'int:1:10080',
 				'type' => 'number:1:10080',
 				'explain' => true
