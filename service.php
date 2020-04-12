@@ -89,11 +89,10 @@ class service
 			$this->db->sql_transaction('begin');
 			$this->change_user_groups($this->current_user_id,
 					$this->groups_in_guild, $this->groups_removed_users);
-			$this->update_characters_and_rank($this->current_user_id);
+			$chars = $this->update_characters_and_rank($this->current_user_id);
 			$this->db->sql_transaction('commit');
 
-			return $this->build_sync_result("Updated",
-					$this->profileFieldHelper->get_current_user_characters_from_profile_field());
+			return $this->build_sync_result("Updated", $chars);
 		}
 		else
 		{
