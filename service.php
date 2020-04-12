@@ -86,11 +86,18 @@ class service
 		$restMembers = $this->restHelper->get_ids();
 		if (in_array($this->current_user_id, $restMembers))
 		{
+			$this->db->sql_transaction('begin');
 			$this->change_user_groups($this->current_user_id,
 					$this->groups_in_guild, $this->groups_removed_users);
 			$this->update_characters_and_rank($this->current_user_id);
+			$this->db->sql_transaction('commit');
+
 			return $this->build_sync_result("Updated",
 					$this->profileFieldHelper->get_current_user_characters_from_profile_field());
+		}
+		else
+		{
+			return $this->build_sync_result("NotInGuild", array());
 		}
 	}
 
@@ -189,7 +196,6 @@ class service
 			$this->change_user_groups($user_id, array(), $this->trial_groups,
 					false);
 		}
-		return $charsStr;
 	}
 
 	private function build_sync_result($result, $characters)
