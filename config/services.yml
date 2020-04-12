@@ -11,6 +11,7 @@ services:
         class: FH3095\WoWGuildMemberCheck\RestHelper
         arguments:
             - '@config'
+            - '@user'
 
     FH3095.WoWGuildMemberCheck.service:
         class: FH3095\WoWGuildMemberCheck\service

@@ -7,10 +7,12 @@ class RestHelper
 	protected $config;
 	protected $baseUrl;
 	protected $client;
+	protected $current_user_id;
 
-	public function __construct(\phpbb\config\config $config)
+	public function __construct(\phpbb\config\config $config, \phpbb\user $user)
 	{
 		$this->config = $config;
+		$this->current_user_id = (string) $this->user->data['user_id'];
 		$this->baseUrl = $this->config['wowmembercheck_webservice_url'];
 		if (substr($this->baseUrl, - 1) !== "/")
 		{
