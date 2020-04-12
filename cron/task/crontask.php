@@ -53,7 +53,7 @@ class crontask extends \phpbb\cron\task\base
 				$curText = $texts[$resultStr];
 				if (! empty($curText))
 				{
-					$curText = ", ";
+					$curText = $curText . ", ";
 				}
 				$curText = $curText . $userId;
 				if (! empty($result['characters']))
