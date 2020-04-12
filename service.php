@@ -90,7 +90,9 @@ class service
 		{
 			$this->change_user_groups($this->current_user_id,
 					$this->groups_in_guild, $this->groups_removed_users);
-			return $this->update_characters_and_rank($this->current_user_id);
+			$this->update_characters_and_rank($this->current_user_id);
+			return $this->build_sync_result("Updated",
+					$this->profileFieldHelper->get_current_user_characters_from_profile_field());
 		}
 	}
 
@@ -124,17 +126,15 @@ class service
 		$result = array();
 		foreach ($toAdd as $id)
 		{
-			$result[$id] = array();
-			$result[$id]["result"] = "Added";
-			$result[$id]["characters"] = $this->profileFieldHelper->get_user_characters_from_profile_field(
-					$id);
+			$result[$id] = $this->build_sync_result("Added",
+					$this->profileFieldHelper->get_user_characters_from_profile_field(
+							$id));
 		}
 		foreach ($toDel as $id)
 		{
-			$result[$id] = array();
-			$result[$id]["result"] = "Removed";
-			$result[$id]["characters"] = $this->profileFieldHelper->get_user_characters_from_profile_field(
-					$id);
+			$result[$id] = $this->build_sync_result("Removed",
+					$this->profileFieldHelper->get_user_characters_from_profile_field(
+							$id));
 		}
 		return $result;
 	}
@@ -192,6 +192,14 @@ class service
 					false);
 		}
 		return $charsStr;
+	}
+
+	private function build_sync_result($result, $characters)
+	{
+		return array(
+			"result" => $result,
+			"characters" => $characters
+		);
 	}
 
 	public function getUserGroupsToAskForAuth()
